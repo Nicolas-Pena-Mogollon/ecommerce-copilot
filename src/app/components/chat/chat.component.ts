@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ApiService } from '../../services/api.service';
+import { UiContextService } from '../../services/ui-context.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -15,7 +16,10 @@ export class ChatComponent {
   response = '';
   selectedImage: File | null = null;
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private uiContextService: UiContextService
+  ) {}
 
   sendMessage() {
     if (this.selectedImage) {
@@ -24,7 +28,11 @@ export class ChatComponent {
         (err) => console.error(err)
       );
     } else {
-      this.apiService.sendTextMessage(this.userInput).subscribe(
+      const context = this.uiContextService.getUiContext(this.userInput);
+      this.apiService.sendTextMessage({
+        userInput: this.userInput,
+        uiContext: context
+      }).subscribe(
         (res) => (this.response = res.reply),
         (err) => console.error(err)
       );

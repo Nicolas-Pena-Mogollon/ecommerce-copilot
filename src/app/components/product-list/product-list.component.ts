@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PRODUCTS, Product } from '../../data/products';
+import { PRODUCTS } from '../../data/products';
+import { Product } from '../../models/product';
+import { CartService } from '../../services/cart.service';
 
 @Component({
   selector: 'app-product-list',
@@ -12,8 +14,10 @@ import { PRODUCTS, Product } from '../../data/products';
 export class ProductListComponent {
   products: Product[] = PRODUCTS;
 
+  constructor(private cartService: CartService) {}
+
   addToCart(product: Product) {
+    this.cartService.addToCart(product);
     console.log('Producto agregado al carrito:', product);
-    // puedes guardar en localStorage, o emitir evento a otro componente
   }
 }

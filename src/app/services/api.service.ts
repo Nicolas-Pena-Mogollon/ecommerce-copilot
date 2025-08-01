@@ -7,8 +7,8 @@ import { HttpClient } from '@angular/common/http';
 export class ApiService {
   constructor(private http: HttpClient) {}
 
-  sendTextMessage(message: string) {
-    return this.http.post<any>('http://localhost:8000/chat', { message });
+  sendTextMessage(payload: any) {
+    return this.http.post<any>('http://localhost:8000/chat', payload);
   }
 
   sendVisionMessage(message: string, image: File) {
