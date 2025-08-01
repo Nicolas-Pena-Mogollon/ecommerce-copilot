@@ -1,0 +1,13 @@
+<div class="chat-container">
+  <form (ngSubmit)="sendMessage()">
+    <textarea [(ngModel)]="userInput" name="userInput" rows="3" placeholder="Escribe tu mensaje..."></textarea>
+
+    <input type="file" (change)="onImageSelected($event)" accept="image/*" />
+
+    <button type="submit">Enviar</button>
+  </form>
+
+  <div class="chat-response" *ngIf="response">
+    <p>{{ response }}</p>
+  </div>
+</div>
