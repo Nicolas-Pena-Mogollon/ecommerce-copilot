@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, Inject, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject, Inject, OnDestroy, AfterViewInit, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Product, ProductCategory } from '../../../domain/models/product.model';
@@ -21,11 +21,15 @@ import { Subscription } from 'rxjs';
   templateUrl: './product-list.component.html',
   styleUrls: ['./product-list.component.scss']
 })
-export class ProductListComponent implements OnInit, OnDestroy {
+export class ProductListComponent implements OnInit, OnDestroy, AfterViewInit {
   private productService = inject(ProductService);
   private cartService = inject(CART_SERVICE_PORT);
   private uiContextService = inject(UiContextService);
   private searchSubscription?: Subscription;
+  private elementRef = inject(ElementRef);
+  private navbarHeight = 70; // Altura del navbar
+  private lastScrollTop = 0;
+  private navbarVisible = true;
 
   products: Product[] = [];
   filteredProducts: Product[] = [];
@@ -44,8 +48,55 @@ export class ProductListComponent implements OnInit, OnDestroy {
     this.setupSearchListener();
   }
 
+  ngAfterViewInit(): void {
+    this.setupNavbarDetection();
+  }
+
   ngOnDestroy(): void {
     this.searchSubscription?.unsubscribe();
+  }
+
+  @HostListener('window:scroll', ['$event'])
+  onWindowScroll(): void {
+    this.detectNavbarVisibility();
+  }
+
+  private setupNavbarDetection(): void {
+    // Detectar la visibilidad inicial del navbar
+    this.detectNavbarVisibility();
+  }
+
+  private detectNavbarVisibility(): void {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const navbar = document.querySelector('.navbar') as HTMLElement;
+    
+    if (navbar) {
+      const navbarRect = navbar.getBoundingClientRect();
+      const isNavbarVisible = navbarRect.top >= 0;
+      
+      if (isNavbarVisible !== this.navbarVisible) {
+        this.navbarVisible = isNavbarVisible;
+        this.adjustFiltersPosition();
+      }
+    }
+    
+    this.lastScrollTop = scrollTop;
+  }
+
+  private adjustFiltersPosition(): void {
+    const filtersSidebar = this.elementRef.nativeElement.querySelector('.filters-sidebar') as HTMLElement;
+    
+    if (filtersSidebar) {
+      if (this.navbarVisible) {
+        // Navbar visible - posición normal
+        filtersSidebar.style.top = '90px';
+        filtersSidebar.style.maxHeight = 'calc(100vh - 110px)';
+      } else {
+        // Navbar oculto - subir los filtros
+        filtersSidebar.style.top = '20px';
+        filtersSidebar.style.maxHeight = 'calc(100vh - 40px)';
+      }
+    }
   }
 
   private setupSearchListener(): void {

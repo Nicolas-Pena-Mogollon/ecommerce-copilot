@@ -1,6 +1,7 @@
 .filter-panel {
   max-width: 100%;
   box-sizing: border-box;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   
   h3 {
     color: #2c3e50;
