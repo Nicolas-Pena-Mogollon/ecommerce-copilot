@@ -20,7 +20,8 @@ import { UiContextService } from '../../../application/services/ui-context.servi
             data-action="navigate-home"
             data-component="brand"
           >
-            🛒 IndraShop
+            <img src="/logos/AlopsTI_Syndicate.png" alt="AlopsTI Syndicate" class="brand-logo">
+            <span class="brand-text">IndraShop</span>
           </a>
         </div>
         
@@ -38,51 +39,44 @@ import { UiContextService } from '../../../application/services/ui-context.servi
               data-component="search-input"
               [attr.data-search-term]="searchTerm"
             />
-            <div class="search-buttons">
-              <button 
-                *ngIf="searchTerm.length > 0" 
-                class="clear-search-btn" 
-                (click)="clearSearch()"
-                title="Limpiar búsqueda"
-                data-action="clear-search"
-                data-component="clear-button"
-              >
-                ✕
-              </button>
-              <button 
-                class="search-btn" 
-                (click)="performSearch()"
-                data-action="search-btn"
-                data-component="search-button"
-              >
-                🔍
-              </button>
-            </div>
+                         <div class="search-buttons">
+               <button 
+                 *ngIf="searchTerm.length > 0" 
+                 class="clear-search-btn" 
+                 (click)="clearSearch()"
+                 title="Limpiar búsqueda"
+                 data-action="clear-search"
+                 data-component="clear-button"
+               >
+                 ✕
+               </button>
+             </div>
           </div>
         </div>
         
-        <div class="navbar-menu" data-nav="menu" data-component="menu">
+        <div class="navbar-actions" data-nav="menu" data-component="menu">
           <a 
             routerLink="/" 
             routerLinkActive="active" 
             [routerLinkActiveOptions]="{exact: true}" 
-            class="nav-link"
+            class="nav-btn"
             data-nav="products"
             data-action="navigate-products"
             data-component="nav-link"
           >
+            <span class="btn-icon">📦</span>
             Productos
           </a>
           <a 
             routerLink="/cart" 
             routerLinkActive="active" 
-            class="nav-link cart-link"
+            class="nav-btn cart-btn"
             data-nav="cart"
             data-action="view-cart"
             data-component="cart-link"
             [attr.data-cart-count]="(cartItemCount$ | async)"
           >
-            <span class="cart-icon">🛒</span>
+            <span class="btn-icon">🛒</span>
             <span class="cart-count" *ngIf="(cartItemCount$ | async) as count; else noCount">
               {{ count }}
             </span>
