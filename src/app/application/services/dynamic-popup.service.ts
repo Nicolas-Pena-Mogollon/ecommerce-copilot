@@ -9,6 +9,23 @@ export interface PopupConfig {
   duration?: number; // Duración en ms, undefined = manual close
   style?: PopupStyle;
   actions?: PopupAction[];
+  steps?: PopupStep[]; // Nuevo: array de pasos para popups secuenciales
+  currentStep?: number; // Nuevo: paso actual
+}
+
+export interface PopupStep {
+  type: 'guide-step';
+  target: string;
+  title: string;
+  message: string;
+  targetInfo?: {
+    ID?: number;
+    productId?: string;
+    productName?: string;
+    filterType?: 'category' | 'price' | 'discount' | 'stock';
+    filterValue?: string;
+    elementIndex?: number;
+  };
 }
 
 export interface PopupContent {
@@ -31,7 +48,7 @@ export interface PopupStyle {
 
 export interface PopupAction {
   label: string;
-  action: 'close' | 'navigate' | 'filter' | 'highlight' | 'custom';
+  action: 'close' | 'navigate' | 'filter' | 'highlight' | 'custom' | 'next' | 'previous';
   data?: any;
   style?: 'primary' | 'secondary' | 'danger';
 }
@@ -41,6 +58,8 @@ export interface PopupInstance {
   componentRef: ComponentRef<any>;
   config: PopupConfig;
   element: HTMLElement;
+  currentStep?: number; // Nuevo: paso actual
+  totalSteps?: number; // Nuevo: total de pasos
 }
 
 @Injectable({
@@ -206,6 +225,12 @@ export class DynamicPopupService {
     switch (action.action) {
       case 'close':
         this.closePopup(popupId);
+        break;
+      case 'next':
+        this.nextStep(popupId);
+        break;
+      case 'previous':
+        this.previousStep(popupId);
         break;
       case 'navigate':
         // Implementar navegación
@@ -430,13 +455,25 @@ export class DynamicPopupService {
    * Crea un popup desde la respuesta del API
    */
   createPopupFromApiResponse(apiResponse: any): PopupInstance | null {
-    console.log('createPopupFromApiResponse called with:', apiResponse);
+    console.log('=== createPopupFromApiResponse called ===');
+    console.log('Full API response:', apiResponse);
+    console.log('Has popup:', !!apiResponse?.popup);
+    console.log('Has steps:', !!apiResponse?.steps);
+    console.log('Steps array:', apiResponse?.steps);
     
+    // Verificar si es un popup con pasos
+    if (apiResponse?.steps && Array.isArray(apiResponse.steps) && apiResponse.steps.length > 0) {
+      console.log('Creating step popup...');
+      return this.createStepPopup(apiResponse);
+    }
+    
+    // Verificar si es un popup simple
     if (!apiResponse?.popup) {
       console.warn('No popup configuration found in API response');
       return null;
     }
 
+    console.log('Creating simple popup...');
     const popup = apiResponse.popup;
     console.log('Processing popup config:', popup);
     
@@ -526,6 +563,312 @@ export class DynamicPopupService {
     const result = this.createPopup(config);
     console.log('Popup creation result:', result);
     return result;
+  }
+
+  /**
+   * Crea un popup con pasos secuenciales
+   */
+  private createStepPopup(apiResponse: any): PopupInstance | null {
+    console.log('Creating step popup with steps:', apiResponse.steps);
+    
+    const steps = apiResponse.steps;
+    const currentStep = 0; // Empezar en el primer paso
+    
+    // Obtener el primer paso
+    const firstStep = steps[currentStep];
+    if (!firstStep) {
+      console.error('No steps found in API response');
+      return null;
+    }
+    
+    console.log('First step:', firstStep);
+    
+    // Generar selector para el primer paso
+    const targetSelector = this.generateSpecificSelector(firstStep.target, firstStep.targetInfo);
+    console.log('Generated target selector for first step:', targetSelector);
+    
+    // Verificar si el elemento existe
+    const targetElement = document.querySelector(targetSelector);
+    console.log('Target element found:', targetElement);
+    
+    if (!targetElement) {
+      console.error(`Target element not found for first step: ${targetSelector}`);
+      
+      // Debug: mostrar todos los elementos disponibles
+      console.log('Available elements for debugging:');
+      console.log('Products with data-product-id:', document.querySelectorAll('[data-product-id]').length);
+      console.log('Products with data-action="add-to-cart":', document.querySelectorAll('[data-action="add-to-cart"]').length);
+      console.log('Cart elements:', document.querySelectorAll('[data-nav="cart"]').length);
+      console.log('All product cards:', document.querySelectorAll('.product-card').length);
+      
+      // Mostrar detalles de los elementos encontrados
+      const productCards = document.querySelectorAll('.product-card');
+      productCards.forEach((card, index) => {
+        console.log(`Product card ${index}:`, {
+          id: card.getAttribute('data-product-id'),
+          name: card.getAttribute('data-product-name'),
+          classList: card.classList.toString()
+        });
+      });
+      
+      const cartElements = document.querySelectorAll('[data-nav="cart"]');
+      cartElements.forEach((cart, index) => {
+        console.log(`Cart element ${index}:`, {
+          nav: cart.getAttribute('data-nav'),
+          action: cart.getAttribute('data-action'),
+          classList: cart.classList.toString()
+        });
+      });
+      
+      return null;
+    }
+    
+    // Crear configuración del popup con pasos
+    const config: PopupConfig = {
+      id: `step-guide-${Date.now()}`,
+      target: targetSelector,
+      content: {
+        type: 'guide-step',
+        title: firstStep.title,
+        message: firstStep.message,
+        data: { step: currentStep + 1, total: steps.length }
+      },
+      position: 'bottom',
+      duration: undefined, // Sin duración automática
+      style: {
+        backgroundColor: '#e8f4fd',
+        borderColor: '#3498db',
+        maxWidth: '320px'
+      },
+      steps: steps,
+      currentStep: currentStep,
+      actions: this.generateStepActions(currentStep, steps.length)
+    };
+    
+    console.log('Created step popup config:', config);
+    const result = this.createPopup(config);
+    console.log('Popup creation result:', result);
+    
+    if (result) {
+      // Agregar información de pasos a la instancia
+      result.currentStep = currentStep;
+      result.totalSteps = steps.length;
+    }
+    
+    return result;
+  }
+
+  /**
+   * Genera las acciones para un popup con pasos
+   */
+  private generateStepActions(currentStep: number, totalSteps: number): PopupAction[] {
+    const actions: PopupAction[] = [];
+    
+    // Botón anterior (solo si no es el primer paso)
+    if (currentStep > 0) {
+      actions.push({
+        label: 'Anterior',
+        action: 'previous',
+        style: 'secondary'
+      });
+    }
+    
+    // Botón siguiente o finalizar
+    if (currentStep < totalSteps - 1) {
+      actions.push({
+        label: 'Siguiente',
+        action: 'next',
+        style: 'primary'
+      });
+    } else {
+      actions.push({
+        label: 'Finalizar',
+        action: 'close',
+        style: 'primary'
+      });
+    }
+    
+    // Botón cerrar (siempre disponible)
+    actions.push({
+      label: 'Cerrar',
+      action: 'close',
+      style: 'secondary'
+    });
+    
+    return actions;
+  }
+
+  /**
+   * Avanza al siguiente paso del popup
+   */
+  nextStep(popupId: string): void {
+    const popup = this.activePopups.get(popupId);
+    if (!popup || !popup.config.steps || popup.currentStep === undefined) {
+      console.error('Popup not found or not a step popup');
+      return;
+    }
+    
+    const nextStepIndex = (popup.currentStep || 0) + 1;
+    if (nextStepIndex >= popup.config.steps.length) {
+      console.log('Already at last step, closing popup');
+      this.closePopup(popupId);
+      return;
+    }
+    
+    this.goToStep(popupId, nextStepIndex);
+  }
+
+  /**
+   * Retrocede al paso anterior del popup
+   */
+  previousStep(popupId: string): void {
+    const popup = this.activePopups.get(popupId);
+    if (!popup || !popup.config.steps || popup.currentStep === undefined) {
+      console.error('Popup not found or not a step popup');
+      return;
+    }
+    
+    const previousStepIndex = (popup.currentStep || 0) - 1;
+    if (previousStepIndex < 0) {
+      console.log('Already at first step');
+      return;
+    }
+    
+    this.goToStep(popupId, previousStepIndex);
+  }
+
+  /**
+   * Va a un paso específico del popup
+   */
+  private goToStep(popupId: string, stepIndex: number): void {
+    const popup = this.activePopups.get(popupId);
+    if (!popup || !popup.config.steps) {
+      console.error('Popup not found or not a step popup');
+      return;
+    }
+    
+    const step = popup.config.steps[stepIndex];
+    if (!step) {
+      console.error('Step not found at index:', stepIndex);
+      return;
+    }
+    
+    // Generar selector para el nuevo paso
+    const targetSelector = this.generateSpecificSelector(step.target, step.targetInfo);
+    const targetElement = document.querySelector(targetSelector);
+    
+    if (!targetElement) {
+      console.error(`Target element not found for step ${stepIndex}: ${targetSelector}`);
+      return;
+    }
+    
+    // Actualizar el contenido del popup
+    this.updatePopupContent(popup, step, stepIndex, popup.config.steps.length);
+    
+    // Reposicionar el popup
+    this.positionPopup(popup.element, targetElement, popup.config.position);
+    
+    // Actualizar la instancia
+    popup.currentStep = stepIndex;
+    popup.config.currentStep = stepIndex;
+    
+    console.log(`Moved to step ${stepIndex + 1} of ${popup.config.steps.length}`);
+  }
+
+  /**
+   * Actualiza el contenido del popup para un paso específico
+   */
+  private updatePopupContent(popup: PopupInstance, step: PopupStep, stepIndex: number, totalSteps: number): void {
+    // Actualizar el contenido
+    const contentContainer = popup.element.querySelector('.popup-content');
+    if (contentContainer) {
+      contentContainer.innerHTML = `
+        <div class="popup-content guide-step">
+          <div class="step-indicator">
+            <span class="step-number">${stepIndex + 1}</span>
+            <span class="step-separator">/</span>
+            <span class="total-steps">${totalSteps}</span>
+          </div>
+          <h3 class="popup-title">${step.title}</h3>
+          <p class="popup-message">${step.message}</p>
+        </div>
+      `;
+    }
+    
+    // Actualizar las acciones
+    const actionsContainer = popup.element.querySelector('.popup-actions');
+    if (actionsContainer) {
+      actionsContainer.innerHTML = '';
+      const newActions = this.generateStepActions(stepIndex, totalSteps);
+      
+      newActions.forEach(action => {
+        const button = document.createElement('button');
+        button.className = `popup-action-btn ${action.style || 'secondary'}`;
+        button.textContent = action.label;
+        button.onclick = () => this.executeStepAction(action, popup.id);
+        actionsContainer.appendChild(button);
+      });
+    }
+  }
+
+  /**
+   * Ejecuta una acción específica para popups con pasos
+   */
+  private executeStepAction(action: PopupAction, popupId: string): void {
+    switch (action.action) {
+      case 'next':
+        this.nextStep(popupId);
+        break;
+      case 'previous':
+        this.previousStep(popupId);
+        break;
+      case 'close':
+        this.closePopup(popupId);
+        break;
+      default:
+        this.executeAction(action, popupId);
+    }
+  }
+
+  /**
+   * Método de prueba para crear un popup con pasos
+   */
+  createTestStepPopup(): PopupInstance | null {
+    const testResponse = {
+      response: "Te guiaré paso a paso para agregar la Camiseta Básica de Algodón al carrito.",
+      steps: [
+        {
+          type: "guide-step",
+          target: "product",
+          title: "Seleccionar producto",
+          message: "Haz clic en el producto para ver sus detalles.",
+          targetInfo: {
+            ID: 1
+          }
+        },
+        {
+          type: "guide-step",
+          target: "product_button",
+          title: "Agregar al carrito",
+          message: "Haz clic aquí para agregar el producto seleccionado al carrito.",
+          targetInfo: {
+            ID: 1
+          }
+        },
+        {
+          type: "guide-step",
+          target: "cart",
+          title: "Ir al carrito",
+          message: "Haz clic en el ícono del carrito para revisar tu compra.",
+          targetInfo: {
+            ID: 1
+          }
+        }
+      ]
+    };
+
+    console.log('Creating test step popup...');
+    return this.createPopupFromApiResponse(testResponse);
   }
 
   /**

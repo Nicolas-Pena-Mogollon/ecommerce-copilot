@@ -3,48 +3,103 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UiContextService } from '../../../application/services/ui-context.service';
 import { DynamicPopupService } from '../../../application/services/dynamic-popup.service';
-import { ApiService } from '../../../application/services/api.service'; // Added import for ApiService
+import { ApiService } from '../../../application/services/api.service';
+import { VoiceChatComponent } from '../voice-chat/voice-chat.component';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-chat-bubble',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, VoiceChatComponent],
   template: `
     <div class="chat-container">
-      <!-- Botón flotante del chat -->
-      <button class="chat-button" (click)="toggleChat()">
-        💬
+      <!-- Botón principal del agente -->
+      <button 
+        class="main-agent-button" 
+        (click)="toggleAgentMenu()"
+        [class.expanded]="isAgentMenuOpen"
+      >
+        <span class="agent-icon">🤖</span>
+        <span class="agent-label">Agente de Ventas</span>
       </button>
 
+      <!-- Menú circular de agentes -->
+      <div class="agent-menu" *ngIf="isAgentMenuOpen">
+        <!-- Chat tradicional -->
+        <button 
+          class="agent-option chat-agent"
+          (click)="openChat('chat')"
+          title="Chat de Ayuda"
+        >
+          <span class="option-icon">💬</span>
+          <span class="option-label">Chat</span>
+        </button>
+
+        <!-- Asistente de voz -->
+        <button 
+          class="agent-option voice-agent"
+          (click)="openChat('voice')"
+          title="Asistente de Voz"
+        >
+          <span class="option-icon">🎤</span>
+          <span class="option-label">Voz</span>
+        </button>
+
+        <!-- Agente de ventas -->
+        <button 
+          class="agent-option sales-agent"
+          (click)="openChat('sales')"
+          title="Agente de Ventas"
+        >
+          <span class="option-icon">🛒</span>
+          <span class="option-label">Ventas</span>
+        </button>
+      </div>
+
       <!-- Ventana del chat -->
-      <div class="chat-window" *ngIf="isOpen">
-        <div class="chat-header">
-          <h3>Chat de Ayuda</h3>
-          <button class="close-btn" (click)="toggleChat()">×</button>
-        </div>
-
-        <div class="chat-messages">
-          <div 
-            *ngFor="let message of messages" 
-            class="message"
-            [class.user]="message.isUser"
-            [class.system]="!message.isUser"
-          >
-            <div class="message-content">
-              {{ message.text }}
+      <div class="chat-window" *ngIf="isChatOpen">
+        <!-- Chat de voz -->
+        <app-voice-chat *ngIf="currentAgentType === 'voice'" (closeChat)="closeChat()"></app-voice-chat>
+        
+        <!-- Chat tradicional y de ventas -->
+        <div *ngIf="currentAgentType !== 'voice'">
+          <div class="chat-header">
+            <div class="header-info">
+              <span class="agent-type-icon">{{ getAgentIcon() }}</span>
+              <h3>{{ getAgentTitle() }}</h3>
             </div>
-            <div class="message-time">{{ message.time }}</div>
+            <button class="close-btn" (click)="closeChat()">×</button>
           </div>
-        </div>
 
-        <div class="chat-input">
-          <input 
-            type="text" 
-            placeholder="Escribe tu mensaje..." 
-            [(ngModel)]="userInput"
-            (keyup.enter)="sendMessage()"
-          />
-          <button class="send-btn" (click)="sendMessage()">Enviar</button>
+          <div class="chat-messages">
+            <div 
+              *ngFor="let message of messages" 
+              class="message"
+              [class.user]="message.isUser"
+              [class.system]="!message.isUser"
+            >
+              <div class="message-content">
+                {{ message.text }}
+              </div>
+              <div class="message-time">{{ message.time }}</div>
+            </div>
+          </div>
+
+          <div class="chat-input">
+            <input 
+              type="text" 
+              [placeholder]="getInputPlaceholder()"
+              [(ngModel)]="userInput"
+              (keyup.enter)="sendMessage()"
+            />
+            <button class="send-btn" (click)="sendMessage()">
+              {{ getSendButtonIcon() }}
+            </button>
+            <!-- Botón de prueba temporal -->
+            <button class="test-btn" (click)="testStepPopup()" style="background: #e74c3c; color: white; padding: 5px 10px; border-radius: 4px; margin-left: 5px;">
+              Test Steps
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -54,268 +109,244 @@ import { ApiService } from '../../../application/services/api.service'; // Added
 export class ChatBubbleComponent {
   private uiContextService = inject(UiContextService);
   private popupService = inject(DynamicPopupService);
-  private apiService = inject(ApiService); // Added ApiService injection
+  private apiService = inject(ApiService);
 
-  isOpen = false;
+  isAgentMenuOpen = false;
+  isChatOpen = false;
+  currentAgentType: 'chat' | 'voice' | 'sales' = 'chat';
   userInput = '';
   messages: Array<{text: string; isUser: boolean; time: string}> = [];
 
-  toggleChat(): void {
-    this.isOpen = !this.isOpen;
+  toggleAgentMenu(): void {
+    this.isAgentMenuOpen = !this.isAgentMenuOpen;
+    if (!this.isAgentMenuOpen) {
+      this.closeChat();
+    }
+  }
+
+  openChat(agentType: 'chat' | 'voice' | 'sales'): void {
+    this.currentAgentType = agentType;
+    this.isChatOpen = true;
+    this.isAgentMenuOpen = false;
+    
+    // Solo agregar mensaje de bienvenida para chat y ventas (no para voz)
+    if (agentType !== 'voice') {
+      this.addWelcomeMessage();
+    }
+  }
+
+  closeChat(): void {
+    this.isChatOpen = false;
+    this.messages = [];
+    this.userInput = '';
+  }
+
+  private addWelcomeMessage(): void {
+    const welcomeMessages = {
+      chat: '¡Hola! Soy tu asistente de chat. ¿En qué puedo ayudarte hoy?',
+      voice: '¡Hola! Soy tu asistente de voz. Habla conmigo para que te ayude.',
+      sales: '¡Hola! Soy tu agente de ventas personal. Te ayudo a encontrar los mejores productos y ofertas.'
+    };
+
+    this.messages.push({
+      text: welcomeMessages[this.currentAgentType],
+      isUser: false,
+      time: this.formatTime(new Date())
+    });
   }
 
   async sendMessage(): Promise<void> {
     if (!this.userInput.trim()) return;
 
-    // Agregar mensaje del usuario al chat
+    // Agregar mensaje del usuario
     this.messages.push({
       text: this.userInput,
       isUser: true,
-      time: new Date().toLocaleTimeString()
+      time: this.formatTime(new Date())
     });
 
     const userInput = this.userInput;
     this.userInput = '';
 
-    // Obtener contexto de la UI
+    await this.processMessageByAgent(userInput);
+  }
+
+  private async processMessageByAgent(userInput: string): Promise<void> {
     const uiContext = await this.uiContextService.getUiContextWithData(userInput);
     
     // Imprimir el JSON completo en la consola
     console.log('=== JSON COMPLETO CAPTURADO ===');
     console.log(JSON.stringify({
       userInput: userInput,
-      uiContext: uiContext
+      uiContext: uiContext,
+      agentType: this.currentAgentType
     }, null, 2));
     console.log('=== FIN DEL JSON ===');
+    
+    let response: string;
 
-    // Procesar la respuesta del API
-    await this.processApiResponse(userInput, uiContext);
+    switch (this.currentAgentType) {
+      case 'chat':
+        response = await this.processChatAgent(userInput, uiContext);
+        break;
+      case 'voice':
+        response = await this.processVoiceAgent(userInput, uiContext);
+        break;
+      case 'sales':
+        response = await this.processSalesAgent(userInput, uiContext);
+        break;
+      default:
+        response = 'Lo siento, no pude procesar tu mensaje.';
+    }
+
+    this.messages.push({
+      text: response,
+      isUser: false,
+      time: this.formatTime(new Date())
+    });
   }
 
-  private async generateAssistantResponse(userInput: string): Promise<string> {
-    // Simular respuesta del asistente
-    const lowerInput = userInput.toLowerCase();
-    
-    if (lowerInput.includes('camiseta') || lowerInput.includes('camisa')) {
-      return 'Te ayudo a encontrar camisetas. Veo que tienes varias opciones disponibles. Te voy a mostrar las mejores opciones...';
-    }
-    
-    if (lowerInput.includes('comprar') || lowerInput.includes('compra')) {
-      return 'Perfecto, te voy a guiar en el proceso de compra. Primero necesito saber qué producto te interesa...';
-    }
-    
-    return 'Entiendo tu consulta. ¿En qué puedo ayudarte con tu experiencia de compra?';
-  }
-
-  private async processApiResponse(userInput: string, uiContext: any): Promise<void> {
+  private async processChatAgent(userInput: string, uiContext: any): Promise<string> {
+    // Lógica del chat tradicional
     try {
-      let apiResponse: any;
+      // Crear el payload sin HTML y sin agentType para el backend
+      const backendPayload = {
+        userInput: userInput,
+        uiContext: {
+          ...uiContext,
+          pageHtml: '' // Campo HTML vacío como solicitado
+        }
+      };
 
-      // Verificar si es una palabra clave específica para endpoint dinámico
-      const lowerInput = userInput.toLowerCase();
-      
-      if (lowerInput.includes('camiseta')) {
-        // Hacer GET request al endpoint específico
-        console.log('Haciendo GET request a endpoint específico para "camiseta"');
-        apiResponse = await this.apiService.getDynamicEndpoint('camiseta').toPromise();
-        console.log('Respuesta del endpoint específico:', apiResponse);
-      } else if (lowerInput.includes('comprar') || lowerInput.includes('filtro') || lowerInput.includes('carrito')) {
-        // Usar simulación para otras palabras clave
-        console.log('Usando simulación para:', lowerInput);
-        apiResponse = this.simulateApiResponse(userInput, uiContext);
-      } else {
-        // Usar el endpoint general de chat
-        apiResponse = await this.apiService.sendTextMessage({
-          userInput: userInput,
-          uiContext: uiContext
-        }).toPromise();
-        console.log('Respuesta del API general:', apiResponse);
-      }
+      // Enviar al backend
+      const apiResponse = await firstValueFrom(this.apiService.sendWrittenChatContext(backendPayload));
 
-      // Procesar la respuesta del API
-      if (apiResponse && apiResponse.popup) {
-        console.log('Creando popup con:', apiResponse.popup);
-        // Crear popup desde la respuesta del API con un pequeño delay para asegurar que el DOM esté listo
+      // Verificar si hay popup o steps para mostrar
+      if (apiResponse && (apiResponse.popup || apiResponse.steps)) {
         setTimeout(() => {
           this.popupService.createPopupFromApiResponse(apiResponse);
         }, 100);
       }
 
-      // Agregar respuesta del asistente al chat
-      const assistantResponse = apiResponse?.response || 'Lo siento, no pude procesar tu mensaje.';
-      this.messages.push({
-        text: assistantResponse,
-        isUser: false,
-        time: new Date().toLocaleTimeString()
-      });
-
+      return apiResponse?.response || 'Entiendo tu consulta. ¿En qué puedo ayudarte?';
     } catch (error) {
-      console.error('Error al procesar respuesta del API:', error);
-      
-      // Fallback a simulación si el API falla
-      const simulatedResponse = this.simulateApiResponse(userInput, uiContext);
-      
-      if (simulatedResponse.popup) {
-        console.log('Creando popup de fallback con:', simulatedResponse.popup);
+      console.error('Error al enviar mensaje al backend:', error);
+      return 'Entiendo tu consulta. ¿En qué puedo ayudarte con tu experiencia de compra?';
+    }
+  }
+
+  private async processVoiceAgent(userInput: string, uiContext: any): Promise<string> {
+    // Lógica específica para asistente de voz
+    const lowerInput = userInput.toLowerCase();
+    
+    if (lowerInput.includes('buscar') || lowerInput.includes('encontrar')) {
+      return 'Te ayudo a buscar productos. ¿Qué tipo de producto necesitas?';
+    }
+    
+    if (lowerInput.includes('precio') || lowerInput.includes('costo')) {
+      return 'Te puedo ayudar con información de precios y ofertas especiales.';
+    }
+    
+    return 'He escuchado tu consulta. Te ayudo con información sobre nuestros productos.';
+  }
+
+  private async processSalesAgent(userInput: string, uiContext: any): Promise<string> {
+    // Lógica específica para agente de ventas
+    try {
+      // Crear el payload sin HTML y sin agentType para el backend
+      const backendPayload = {
+        userInput: userInput,
+        uiContext: {
+          ...uiContext,
+          pageHtml: '' // Campo HTML vacío como solicitado
+        }
+      };
+
+      // Enviar al backend
+      const apiResponse = await firstValueFrom(this.apiService.sendWrittenChatContext(backendPayload));
+
+      // Verificar si hay popup o steps para mostrar
+      if (apiResponse && (apiResponse.popup || apiResponse.steps)) {
         setTimeout(() => {
-          this.popupService.createPopupFromApiResponse(simulatedResponse);
+          this.popupService.createPopupFromApiResponse(apiResponse);
         }, 100);
       }
 
-      this.messages.push({
-        text: simulatedResponse.response,
-        isUser: false,
-        time: new Date().toLocaleTimeString()
-      });
+      return apiResponse?.response || 'Como tu agente de ventas personal, estoy aquí para ayudarte a encontrar los mejores productos al mejor precio.';
+    } catch (error) {
+      console.error('Error al enviar mensaje al backend:', error);
+      
+      // Fallback a lógica local si falla el backend
+      const lowerInput = userInput.toLowerCase();
+      
+      if (lowerInput.includes('oferta') || lowerInput.includes('descuento')) {
+        return '¡Excelente! Tenemos ofertas especiales en este momento. Te muestro las mejores promociones disponibles.';
+      }
+      
+      if (lowerInput.includes('recomendar') || lowerInput.includes('sugerir')) {
+        return 'Basándome en tus preferencias, te recomiendo estos productos que podrían interesarte.';
+      }
+      
+      if (lowerInput.includes('comprar') || lowerInput.includes('adquirir')) {
+        return '¡Perfecto! Te guío en el proceso de compra. ¿Ya tienes algo específico en mente?';
+      }
+      
+      return 'Como tu agente de ventas personal, estoy aquí para ayudarte a encontrar los mejores productos al mejor precio.';
     }
   }
 
-  private simulateApiResponse(userInput: string, context: any): any {
-    const lowerInput = userInput.toLowerCase();
-    
-    // Simular diferentes tipos de respuestas según el input
-    if (lowerInput.includes('camiseta') && context.visibleProducts.length > 0) {
-      return {
-        response: 'Te muestro información sobre este producto',
-        popup: {
-          type: 'info',
-          target: '.product-card',
-          title: 'Camiseta de Algodón',
-          message: 'Producto de alta calidad con descuento del 20%',
-          targetInfo: {
-            productName: 'Camiseta de Algodón',
-            elementIndex: 0
-          }
-        }
-      };
-    }
-    
-    if (lowerInput.includes('comprar') || lowerInput.includes('compra')) {
-      return {
-        response: 'Te guío en el proceso de compra',
-        popup: {
-          type: 'guide-step',
-          target: '.navbar-search .search-input',
-          title: 'Paso 1: Buscar Productos',
-          message: 'Escribe aquí lo que quieres comprar'
-        }
-      };
-    }
-
-    // Prueba con filtros específicos
-    if (lowerInput.includes('filtro') || lowerInput.includes('filtrar')) {
-      if (lowerInput.includes('categoría') || lowerInput.includes('categoria')) {
-        return {
-          response: 'Te ayudo con el filtro de categoría',
-          popup: {
-            type: 'info',
-            target: '.category-filter',
-            title: 'Filtro de Categoría',
-            message: 'Selecciona una categoría para filtrar productos',
-            targetInfo: {
-              filterType: 'category',
-              filterValue: 'ropa'
-            }
-          }
-        };
-      }
-      
-      if (lowerInput.includes('precio')) {
-        return {
-          response: 'Te ayudo con el filtro de precio',
-          popup: {
-            type: 'info',
-            target: '.price-filter',
-            title: 'Filtro de Precio',
-            message: 'Ajusta el rango de precios aquí',
-            targetInfo: {
-              filterType: 'price',
-              filterValue: '0-100000'
-            }
-          }
-        };
-      }
-      
-      return {
-        response: 'Te ayudo con los filtros',
-        popup: {
-          type: 'info',
-          target: '.filters-sidebar',
-          title: 'Filtros Disponibles',
-          message: 'Aquí puedes filtrar por categoría, precio, descuento y disponibilidad.'
-        }
-      };
-    }
-
-    // Prueba con carrito
-    if (lowerInput.includes('carrito') || lowerInput.includes('cart')) {
-      return {
-        response: 'Información sobre tu carrito',
-        popup: {
-          type: 'info',
-          target: '.cart-link',
-          title: 'Tu Carrito',
-          message: `Tienes ${context.cartItems.length} productos en tu carrito.`
-        }
-      };
-    }
-
-    // Prueba con búsqueda
-    if (lowerInput.includes('buscar') || lowerInput.includes('search')) {
-      return {
-        response: 'Te ayudo con la búsqueda',
-        popup: {
-          type: 'guide-step',
-          target: '.search-btn',
-          title: 'Búsqueda Inteligente',
-          message: 'Haz clic aquí para buscar productos.'
-        }
-      };
-    }
-
-    // Prueba con productos específicos por nombre
-    if (lowerInput.includes('laptop') || lowerInput.includes('computador')) {
-      return {
-        response: 'Te muestro las mejores laptops',
-        popup: {
-          type: 'info',
-          target: '.product-card',
-          title: 'Laptop Gaming',
-          message: 'Ideal para gaming y trabajo profesional',
-          targetInfo: {
-            productName: 'Laptop Gaming Pro',
-            elementIndex: 1
-          }
-        }
-      };
-    }
-
-    // Prueba con botón de agregar al carrito
-    if (lowerInput.includes('agregar') || lowerInput.includes('añadir')) {
-      return {
-        response: 'Te muestro cómo agregar productos al carrito',
-        popup: {
-          type: 'guide-step',
-          target: '.product-card .add-to-cart-btn',
-          title: 'Agregar al Carrito',
-          message: 'Haz clic en este botón para agregar el producto a tu carrito.',
-          targetInfo: {
-            elementIndex: 0
-          }
-        }
-      };
-    }
-    
-    return {
-      response: 'Respuesta estándar',
-      popup: null
+  getAgentIcon(): string {
+    const icons = {
+      chat: '💬',
+      voice: '🎤',
+      sales: '🛒'
     };
+    return icons[this.currentAgentType];
   }
 
-  private getCurrentTime(): string {
-    return new Date().toLocaleTimeString('es-ES', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+  getAgentTitle(): string {
+    const titles = {
+      chat: 'Chat de Ayuda',
+      voice: 'Asistente de Voz',
+      sales: 'Agente de Ventas'
+    };
+    return titles[this.currentAgentType];
+  }
+
+  getInputPlaceholder(): string {
+    const placeholders = {
+      chat: 'Escribe tu mensaje...',
+      voice: 'Escribe o habla tu consulta...',
+      sales: '¿Qué producto te interesa?'
+    };
+    return placeholders[this.currentAgentType];
+  }
+
+  getSendButtonIcon(): string {
+    const icons = {
+      chat: '📤',
+      voice: '🎤',
+      sales: '💼'
+    };
+    return icons[this.currentAgentType];
+  }
+
+  /**
+   * Método de prueba temporal para crear un popup con pasos
+   */
+  testStepPopup(): void {
+    console.log('Testing step popup...');
+    this.popupService.createTestStepPopup();
+  }
+
+  /**
+   * Formatea la hora para mostrar solo hora y minuto en formato AM/PM
+   */
+  private formatTime(date: Date): string {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
     });
   }
 } 
