@@ -18,7 +18,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       discount: 28,
       stock: 50,
       description: 'Camiseta cómoda de algodón 100% orgánico, perfecta para el día a día',
-      imageUrl: 'https://via.placeholder.com/300x400/4A90E2/FFFFFF?text=Camiseta',
+      imageUrl: '/images/products/camiseta-basica.jpg',
       isAvailable: true
     },
     {
@@ -30,7 +30,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       discount: 10,
       stock: 15,
       description: 'El último smartphone con cámara profesional y batería de larga duración',
-      imageUrl: 'https://via.placeholder.com/300x400/2ECC71/FFFFFF?text=Smartphone',
+      imageUrl: '/images/products/smartphone-galaxy.jpg',
       isAvailable: true
     },
     {
@@ -40,7 +40,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       price: 5459958,
       stock: 8,
       description: 'Refrigerador moderno con tecnología No Frost y eficiencia energética A++',
-      imageUrl: 'https://via.placeholder.com/300x400/9B59B6/FFFFFF?text=Refrigerador',
+      imageUrl: '/images/products/refrigerador-samsung.jpg',
       isAvailable: true
     },
     {
@@ -52,7 +52,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       discount: 31,
       stock: 100,
       description: 'Pizza italiana auténtica con mozzarella y tomate, lista para hornear',
-      imageUrl: 'https://via.placeholder.com/300x400/E74C3C/FFFFFF?text=Pizza',
+      imageUrl: '/images/products/pizza-margherita.jpg',
       isAvailable: true
     },
     {
@@ -64,7 +64,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       discount: 17,
       stock: 12,
       description: 'Laptop potente para trabajo y gaming con procesador Intel i7',
-      imageUrl: 'https://via.placeholder.com/300x400/34495E/FFFFFF?text=Laptop',
+      imageUrl: '/images/products/laptop-dell.jpg',
       isAvailable: true
     },
     {
@@ -74,7 +74,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       price: 251958,
       stock: 30,
       description: 'Jeans modernos con corte slim fit, perfectos para cualquier ocasión',
-      imageUrl: 'https://via.placeholder.com/300x400/3498DB/FFFFFF?text=Jeans',
+      imageUrl: '/images/products/jeans-slim-fit.jpg',
       isAvailable: true
     },
     {
@@ -86,7 +86,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       discount: 14,
       stock: 5,
       description: 'Lavadora inteligente con múltiples programas y control digital',
-      imageUrl: 'https://via.placeholder.com/300x400/95A5A6/FFFFFF?text=Lavadora',
+      imageUrl: '/images/products/lavadora-lg.jpg',
       isAvailable: true
     },
     {
@@ -96,7 +96,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       price: 67158,
       stock: 200,
       description: 'Café 100% arábica de las montañas de Colombia, tostado artesanalmente',
-      imageUrl: 'https://via.placeholder.com/300x400/8B4513/FFFFFF?text=Café',
+      imageUrl: '/images/products/cafe-colombiano.jpg',
       isAvailable: true
     },
     {
@@ -108,7 +108,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       discount: 13,
       stock: 25,
       description: 'Auriculares inalámbricos con cancelación de ruido activa',
-      imageUrl: 'https://via.placeholder.com/300x400/2C3E50/FFFFFF?text=Auriculares',
+      imageUrl: '/images/products/auriculares-sony.jpg',
       isAvailable: true
     },
     {
@@ -120,7 +120,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       discount: 31,
       stock: 18,
       description: 'Vestido elegante para ocasiones especiales, confeccionado en seda natural',
-      imageUrl: 'https://via.placeholder.com/300x400/1A1A1A/FFFFFF?text=Vestido',
+      imageUrl: '/images/products/vestido-elegante.jpg',
       isAvailable: true
     },
     {
@@ -130,7 +130,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       price: 545958,
       stock: 20,
       description: 'Microondas con grill y múltiples funciones de cocción',
-      imageUrl: 'https://via.placeholder.com/300x400/7F8C8D/FFFFFF?text=Microondas',
+      imageUrl: '/images/products/microondas-panasonic.jpg',
       isAvailable: true
     },
     {
@@ -142,7 +142,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       discount: 24,
       stock: 150,
       description: 'Chocolate premium con 70% de cacao, sin azúcares añadidos',
-      imageUrl: 'https://via.placeholder.com/300x400/5D4037/FFFFFF?text=Chocolate',
+      imageUrl: '/images/products/chocolate-artesanal.jpg',
       isAvailable: true
     },
     {
@@ -152,7 +152,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       price: 2729958,
       stock: 10,
       description: 'Tablet versátil con pantalla Retina y chip M1 para máximo rendimiento',
-      imageUrl: 'https://via.placeholder.com/300x400/BDC3C7/FFFFFF?text=Tablet',
+      imageUrl: '/images/products/tablet-ipad.jpg',
       isAvailable: true
     },
     {
@@ -164,7 +164,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       discount: 19,
       stock: 35,
       description: 'Zapatillas deportivas con tecnología Air Max para máximo confort',
-      imageUrl: 'https://via.placeholder.com/300x400/FF6B6B/FFFFFF?text=Zapatillas',
+      imageUrl: '/images/products/zapatillas-nike.jpg',
       isAvailable: true
     },
     {
@@ -176,7 +176,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       discount: 25,
       stock: 3,
       description: 'Sofá moderno con diseño minimalista y tapizado de alta calidad',
-      imageUrl: 'https://via.placeholder.com/300x400/D35400/FFFFFF?text=Sofá',
+      imageUrl: '/images/products/sofa-moderno.jpg',
       isAvailable: true
     },
     {
@@ -186,7 +186,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       price: 104958,
       stock: 45,
       description: 'Edición especial de la trilogía completa de Tolkien',
-      imageUrl: 'https://via.placeholder.com/300x400/8E44AD/FFFFFF?text=Libro',
+      imageUrl: '/images/products/libro-senor-anillos.jpg',
       isAvailable: true
     },
     {
@@ -198,7 +198,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       discount: 20,
       stock: 22,
       description: 'Set de construcción con 750 piezas, incluye figuras coleccionables',
-      imageUrl: 'https://via.placeholder.com/300x400/F39C12/FFFFFF?text=Lego',
+      imageUrl: '/images/products/lego-star-wars.jpg',
       isAvailable: true
     },
     {
@@ -208,7 +208,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       price: 797958,
       stock: 15,
       description: 'Raqueta profesional con encordado de alta tensión',
-      imageUrl: 'https://via.placeholder.com/300x400/27AE60/FFFFFF?text=Raqueta',
+      imageUrl: '/images/products/raqueta-tenis.jpg',
       isAvailable: true
     },
     {
@@ -220,7 +220,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       discount: 30,
       stock: 60,
       description: 'Lámpara moderna con luz ajustable y diseño escandinavo',
-      imageUrl: 'https://via.placeholder.com/300x400/F1C40F/FFFFFF?text=Lámpara',
+      imageUrl: '/images/products/lampara-mesa.jpg',
       isAvailable: true
     },
     {
@@ -230,7 +230,7 @@ export class MockProductRepository implements ProductRepositoryPort {
       price: 167958,
       stock: 28,
       description: 'Peluche suave de 1 metro de altura, perfecto para niños y adultos',
-      imageUrl: 'https://via.placeholder.com/300x400/8B7355/FFFFFF?text=Peluche',
+      imageUrl: '/images/products/peluche-oso.jpg',
       isAvailable: true
     }
   ];

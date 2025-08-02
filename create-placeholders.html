@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generador de Placeholders</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .placeholder { 
+            width: 300px; 
+            height: 400px; 
+            border: 2px solid #ccc; 
+            margin: 10px; 
+            display: inline-block;
+            background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+            position: relative;
+            text-align: center;
+            line-height: 400px;
+            font-size: 18px;
+            color: #666;
+        }
+        .download-btn {
+            margin: 10px;
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generador de Imágenes de Placeholder</h1>
+    <p>Haz clic en cada imagen para descargarla:</p>
+    
+    <div id="placeholders"></div>
+
+    <script>
+        const products = [
+            { name: 'pizza-margherita.jpg', text: 'Pizza' },
+            { name: 'laptop-dell.jpg', text: 'Laptop' },
+            { name: 'jeans-slim-fit.jpg', text: 'Jeans' },
+            { name: 'cafe-colombiano.jpg', text: 'Café' },
+            { name: 'auriculares-sony.jpg', text: 'Auriculares' },
+            { name: 'vestido-elegante.jpg', text: 'Vestido' },
+            { name: 'chocolate-artesanal.jpg', text: 'Chocolate' },
+            { name: 'tablet-ipad.jpg', text: 'Tablet' },
+            { name: 'zapatillas-nike.jpg', text: 'Zapatillas' },
+            { name: 'sofa-moderno.jpg', text: 'Sofá' },
+            { name: 'libro-senor-anillos.jpg', text: 'Libro' },
+            { name: 'lego-star-wars.jpg', text: 'Lego' },
+            { name: 'raqueta-tenis.jpg', text: 'Raqueta' },
+            { name: 'lampara-mesa.jpg', text: 'Lámpara' },
+            { name: 'peluche-oso.jpg', text: 'Peluche' },
+            { name: 'lavadora-lg.jpg', text: 'Lavadora' },
+            { name: 'microondas-panasonic.jpg', text: 'Microondas' }
+        ];
+
+        const container = document.getElementById('placeholders');
+        
+        products.forEach(product => {
+            const div = document.createElement('div');
+            div.className = 'placeholder';
+            div.textContent = product.text;
+            div.onclick = () => downloadImage(div, product.name);
+            container.appendChild(div);
+        });
+
+        function downloadImage(element, filename) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 300;
+            canvas.height = 400;
+            const ctx = canvas.getContext('2d');
+            
+            // Crear gradiente de fondo
+            const gradient = ctx.createLinearGradient(0, 0, 300, 400);
+            gradient.addColorStop(0, '#f0f0f0');
+            gradient.addColorStop(1, '#e0e0e0');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 300, 400);
+            
+            // Agregar borde
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(1, 1, 298, 398);
+            
+            // Agregar texto
+            ctx.fillStyle = '#666';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(element.textContent, 150, 200);
+            
+            // Descargar
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+    </script>
+</body>
+</html> 
