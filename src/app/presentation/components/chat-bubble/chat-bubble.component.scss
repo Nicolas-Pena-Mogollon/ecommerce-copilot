@@ -1,0 +1,421 @@
+.chat-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+// Botón principal del agente
+.main-agent-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  width: 80px;
+  height: 80px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  user-select: none;
+  font-weight: 600;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  &.expanded {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: scale(1.05);
+  }
+
+  .agent-icon {
+    font-size: 1.5rem;
+  }
+
+  .agent-label {
+    font-weight: 600;
+    font-size: 0.7rem;
+    text-align: center;
+    line-height: 1;
+  }
+}
+
+// Menú circular de agentes
+.agent-menu {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 280px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+
+  // Animación de entrada
+  animation: menuAppear 0.3s ease-out;
+}
+
+@keyframes menuAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// Opciones de agentes (botones circulares)
+.agent-option {
+  position: absolute;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .option-icon {
+    font-size: 1.2rem;
+  }
+
+  .option-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  // Distribución orgánica según la imagen:
+  // Verde (pequeño, arriba-izquierda)
+  &.chat-agent {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    width: 60px;
+    height: 60px;
+    top: 70px;
+    left: 150px;
+    animation: slideFromTopLeft 0.3s ease-out 0.1s both;
+  }
+
+  // Azul (pequeño, abajo-izquierda)
+  &.voice-agent {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+    width: 60px;
+    height: 60px;
+    bottom: 5px;
+    left: 120px;
+    animation: slideFromBottomLeft 0.3s ease-out 0.2s both;
+  }
+
+  // Naranja (mediano, arriba-derecha)
+  &.sales-agent {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    color: white;
+    width: 60px;
+    height: 60px;
+    top: 43px;
+    right: -1px;
+    animation: slideFromTopRight 0.3s ease-out 0.3s both;
+  }
+
+  // Púrpura (grande, abajo-derecha) - Nuevo botón
+  &.support-agent {
+    background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+    color: white;
+    width: 80px;
+    height: 80px;
+    bottom: 20px;
+    right: 20px;
+    animation: slideFromBottomRight 0.3s ease-out 0.4s both;
+  }
+}
+
+@keyframes slideFromTopLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@keyframes slideFromBottomLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@keyframes slideFromTopRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@keyframes slideFromBottomRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+// Ventana del chat
+.chat-window {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 400px;
+  height: 500px; // Reducida de 600px para no interferir con la barra de búsqueda
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: chatWindowAppear 0.3s ease-out;
+
+  // Estilos específicos para el componente de voz
+  app-voice-chat {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .chat-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0; // Evita que el header se comprima
+
+    .header-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .agent-type-icon {
+        font-size: 1.2rem;
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 50%;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+
+  .chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto; // Barra de desplazamiento vertical
+    background: #f8f9fa;
+    max-height: 350px; // Altura máxima para asegurar que quepa el input
+
+    // Estilos para la barra de desplazamiento
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #a8a8a8;
+      }
+    }
+
+    .message {
+      margin-bottom: 15px;
+      display: flex;
+      flex-direction: column;
+
+      &.system {
+        align-items: flex-start;
+
+        .message-content {
+          background: #e3f2fd;
+          color: #1565c0;
+          border-radius: 15px 15px 15px 5px;
+          padding: 10px 15px;
+          max-width: 80%;
+          font-size: 0.9rem;
+        }
+      }
+
+      &.user {
+        align-items: flex-end;
+
+        .message-content {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border-radius: 15px 15px 5px 15px;
+          padding: 10px 15px;
+          max-width: 80%;
+          font-size: 0.9rem;
+        }
+      }
+
+      .message-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 5px;
+        padding: 0 5px;
+      }
+    }
+  }
+
+  .chat-input {
+    padding: 15px;
+    background: white;
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0; // Evita que el input se comprima
+
+    input {
+      flex: 1;
+      padding: 10px 15px;
+      border: 2px solid #e9ecef;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.3s ease;
+
+      &:focus {
+        border-color: #667eea;
+      }
+    }
+
+    .send-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+  }
+}
+
+@keyframes chatWindowAppear {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .chat-window {
+    width: 300px;
+    height: 400px; // Reducida de 400px para mantener proporción
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .main-agent-button {
+    width: 60px;
+    height: 60px;
+    
+    .agent-icon {
+      font-size: 1.2rem;
+    }
+    
+    .agent-label {
+      font-size: 0.6rem;
+    }
+  }
+
+  .agent-menu {
+    width: 180px;
+    height: 90px;
+  }
+
+  .agent-option {
+    width: 50px;
+    height: 50px;
+
+    .option-icon {
+      font-size: 1rem;
+    }
+
+    .option-label {
+      font-size: 0.6rem;
+    }
+  }
+} 

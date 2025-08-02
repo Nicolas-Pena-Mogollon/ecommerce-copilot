@@ -1,0 +1,48 @@
+<div class="product-list-container">
+  <div class="product-list-header">
+  </div>
+
+  <div class="product-list-content">
+    <!-- Sidebar de filtros -->
+    <div class="filters-sidebar">
+      <app-product-filter
+        (categoryFilter)="onCategoryFilter($event)"
+        (priceRangeFilter)="onPriceRangeFilter($event.minPrice, $event.maxPrice)"
+        (discountFilter)="onDiscountFilter($event)"
+        (stockFilter)="onStockFilter($event)"
+        (clearFiltersEvent)="onClearFilters()">
+      </app-product-filter>
+    </div>
+
+    <!-- Contenido principal de productos -->
+    <div class="products-main">
+      <div class="products-header">
+        <h2>Productos ({{ filteredProducts.length }})</h2>
+        <div class="loading-spinner" *ngIf="loading">Cargando productos...</div>
+        <div class="searching-indicator" *ngIf="isSearching && !loading">
+          <span class="search-icon">🔍</span>
+          Buscando...
+        </div>
+      </div>
+
+      <!-- Grid de productos -->
+      <div class="products-grid" *ngIf="filteredProducts.length > 0; else noProducts">
+        <app-product-card
+          *ngFor="let product of filteredProducts; let i = index"
+          [product]="product"
+          [productIndex]="i"
+          (addToCartEvent)="onAddToCart($event)">
+        </app-product-card>
+      </div>
+
+      <!-- Mensaje cuando no hay productos -->
+      <ng-template #noProducts>
+        <div class="no-products">
+          <div class="no-products-icon">📦</div>
+          <h3>No se encontraron productos</h3>
+          <p>Intenta ajustar los filtros o buscar con otros términos.</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div> 

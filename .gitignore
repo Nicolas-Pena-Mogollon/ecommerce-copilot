@@ -5,6 +5,7 @@
 /tmp
 /out-tsc
 /bazel-out
+.vscode
 
 # Node
 /node_modules
@@ -12,7 +13,6 @@ npm-debug.log
 yarn-error.log
 
 # IDEs and editors
-.vscode/
 .idea/
 .project
 .classpath
@@ -20,7 +20,6 @@ yarn-error.log
 *.launch
 .settings/
 *.sublime-workspace
-.editorconfig
 
 # Visual Studio Code
 .vscode/*
