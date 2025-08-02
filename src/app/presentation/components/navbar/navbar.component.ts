@@ -20,8 +20,8 @@ import { UiContextService } from '../../../application/services/ui-context.servi
             data-action="navigate-home"
             data-component="brand"
           >
-            <span class="brand-icon">🛒</span>
-            IndraShop
+            <img src="/logos/AlopsTI_Syndicate.png" alt="AlopsTI Syndicate" class="brand-logo">
+            <span class="brand-text">IndraShop</span>
           </a>
         </div>
         
