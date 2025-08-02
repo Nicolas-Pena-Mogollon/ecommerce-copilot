@@ -8,6 +8,7 @@ import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 export interface VoiceAgentState {
   isListening: boolean;
   isProcessing: boolean;
+  hasAssistantSpeaking: boolean;
   hasPermission: boolean;
   isSupported: boolean;
   lastRecognizedText: string;
@@ -26,6 +27,7 @@ export class VoiceAgentService {
   private stateSubject = new BehaviorSubject<VoiceAgentState>({
     isListening: false,
     isProcessing: false,
+    hasAssistantSpeaking: false,
     hasPermission: false,
     isSupported: false,
     lastRecognizedText: '',
@@ -225,10 +227,19 @@ export class VoiceAgentService {
    */
   async speakText(text: string): Promise<void> {
     try {
+      // Marcar que el asistente va a empezar a hablar
+      this.updateState({ hasAssistantSpeaking: true });
+      
       await this.voiceService.speakText(text);
+      
+      // Marcar que el asistente terminó de hablar
+      this.updateState({ hasAssistantSpeaking: false });
     } catch (error) {
       console.error('Error al leer texto:', error);
-      this.updateState({ error: `Error al leer texto: ${error}` });
+      this.updateState({ 
+        error: `Error al leer texto: ${error}`,
+        hasAssistantSpeaking: false 
+      });
     }
   }
 
@@ -237,13 +248,14 @@ export class VoiceAgentService {
    */
   stopSpeaking(): void {
     this.voiceService.stopSpeaking();
+    this.updateState({ hasAssistantSpeaking: false });
   }
 
   /**
    * Verifica si el asistente está hablando
    */
   isAssistantSpeaking(): boolean {
-    return this.voiceService.isSpeaking();
+    return this.stateSubject.value.hasAssistantSpeaking;
   }
 
   /**
@@ -301,6 +313,7 @@ export class VoiceAgentService {
     this.updateState({
       isListening: false,
       isProcessing: false,
+      hasAssistantSpeaking: false,
       lastRecognizedText: '',
       error: null
     });

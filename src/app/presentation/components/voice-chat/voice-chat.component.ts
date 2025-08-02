@@ -20,6 +20,7 @@ export class VoiceChatComponent implements OnInit, OnDestroy {
   state: VoiceAgentState = {
     isListening: false,
     isProcessing: false,
+    hasAssistantSpeaking: false,
     hasPermission: false,
     isSupported: false,
     lastRecognizedText: '',
@@ -124,6 +125,7 @@ export class VoiceChatComponent implements OnInit, OnDestroy {
   getMicButtonTitle(): string {
     if (!this.state.hasPermission) return 'Se requieren permisos de micrófono';
     if (!this.state.isSupported) return 'Tu navegador no soporta reconocimiento de voz';
+    if (this.state.hasAssistantSpeaking) return 'El asistente está hablando - espera a que termine';
     if (this.state.isProcessing) return 'Procesando consulta...';
     if (this.state.isListening) return 'Detener escucha';
     return 'Iniciar escucha';

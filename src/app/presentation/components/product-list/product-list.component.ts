@@ -62,11 +62,18 @@ export class ProductListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private setupNavbarDetection(): void {
-    // Detectar la visibilidad inicial del navbar
-    this.detectNavbarVisibility();
+    // Detectar la visibilidad inicial del navbar solo en el navegador
+    if (typeof window !== 'undefined') {
+      this.detectNavbarVisibility();
+    }
   }
 
   private detectNavbarVisibility(): void {
+    // Verificar que estamos en el navegador
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     const navbar = document.querySelector('.navbar') as HTMLElement;
     
@@ -84,6 +91,11 @@ export class ProductListComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private adjustFiltersPosition(): void {
+    // Verificar que estamos en el navegador
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     const filtersSidebar = this.elementRef.nativeElement.querySelector('.filters-sidebar') as HTMLElement;
     
     if (filtersSidebar) {

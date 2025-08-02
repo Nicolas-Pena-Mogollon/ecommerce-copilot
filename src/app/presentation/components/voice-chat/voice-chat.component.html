@@ -12,9 +12,9 @@
   <div class="voice-content">
     <!-- Indicador de estado -->
     <div class="status-indicator" *ngIf="state.hasPermission">
-      <div class="status-card" [class.active]="state.isListening || state.isProcessing || isAssistantSpeaking()">
-        <!-- Estado: Listo -->
-        <div class="status-ready" *ngIf="!state.isListening && !state.isProcessing && !isAssistantSpeaking()">
+             <div class="status-card" [class.active]="state.isListening || state.isProcessing || state.hasAssistantSpeaking">
+                 <!-- Estado: Listo -->
+         <div class="status-ready" *ngIf="!state.isListening && !state.isProcessing && !state.hasAssistantSpeaking">
           <div class="status-dot ready"></div>
           <span class="status-text">Listo para escuchar</span>
         </div>
@@ -32,7 +32,7 @@
         </div>
         
         <!-- Estado: Hablando -->
-        <div class="status-speaking" *ngIf="isAssistantSpeaking()">
+        <div class="status-speaking" *ngIf="state.hasAssistantSpeaking">
           <div class="status-dot speaking"></div>
           <span class="status-text">Respondiendo... (Presiona para interrumpir)</span>
         </div>
@@ -46,16 +46,16 @@
         class="mic-button"
         [class.listening]="state.isListening"
         [class.processing]="state.isProcessing"
-        [class.speaking]="isAssistantSpeaking()"
-        [disabled]="!state.hasPermission || !state.isSupported"
+        [class.speaking]="state.hasAssistantSpeaking"
+        [disabled]="!state.hasPermission || !state.isSupported || state.hasAssistantSpeaking"
         (click)="toggleListening()"
         [title]="getMicButtonTitle()"
       >
-        <span class="mic-icon" *ngIf="!isAssistantSpeaking()">🎤</span>
-        <span class="mic-icon" *ngIf="isAssistantSpeaking()">🔊</span>
+        <span class="mic-icon" *ngIf="!state.hasAssistantSpeaking">🎤</span>
+        <span class="mic-icon" *ngIf="state.hasAssistantSpeaking">🔊</span>
         
         <!-- Ondas de animación -->
-        <div class="mic-waves" *ngIf="state.isListening || state.isProcessing || isAssistantSpeaking()">
+        <div class="mic-waves" *ngIf="state.isListening || state.isProcessing || state.hasAssistantSpeaking">
           <div class="wave"></div>
           <div class="wave"></div>
           <div class="wave"></div>
@@ -75,7 +75,7 @@
         class="stop-button"
         (click)="stopSpeaking()"
         title="Detener respuesta"
-        *ngIf="isAssistantSpeaking()"
+        *ngIf="state.hasAssistantSpeaking"
       >
         🔇
       </button>
@@ -114,7 +114,7 @@
       </div>
 
       <!-- Instrucciones de uso - SOLO cuando no hay texto reconocido y no está procesando -->
-      <div class="usage-instructions" *ngIf="state.hasPermission && !state.lastRecognizedText && !state.isListening && !state.isProcessing && !isAssistantSpeaking()">
+      <div class="usage-instructions" *ngIf="state.hasPermission && !state.lastRecognizedText && !state.isListening && !state.isProcessing && !state.hasAssistantSpeaking">
         <div class="instruction-icon">💡</div>
         <p>Presiona el botón del micrófono y di lo que necesites. Presiona nuevamente para detener y obtener tu respuesta.</p>
       </div>
