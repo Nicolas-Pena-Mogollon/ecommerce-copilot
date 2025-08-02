@@ -86,14 +86,15 @@ export class DynamicPopupService {
       // Crear el elemento del popup
       const popupElement = this.createPopupElement(config);
       
-      // Posicionar el popup
-      this.positionPopup(popupElement, targetElement, config.position);
+      // Ocultar el popup inicialmente
+      popupElement.style.opacity = '0';
+      popupElement.style.visibility = 'hidden';
       
-      // Agregar al DOM
+      // Agregar al DOM primero (sin posicionar)
       document.body.appendChild(popupElement);
       
-      // Hacer scroll para que el popup sea visible
-      this.scrollToPopup(popupElement, targetElement, config.position);
+      // Hacer scroll hacia el target y luego posicionar el popup
+      this.scrollToTargetAndPositionPopup(popupElement, targetElement, config.position);
       
       // Crear instancia
       const popupInstance: PopupInstance = {
@@ -258,10 +259,27 @@ export class DynamicPopupService {
    * Posiciona el popup relativo al elemento objetivo
    */
   private positionPopup(popup: HTMLElement, target: Element, position: string): void {
-    const targetRect = target.getBoundingClientRect();
+    // Obtener las dimensiones del popup antes de posicionarlo
     const popupRect = popup.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    
+    console.log('Positioning popup:', {
+      targetRect: {
+        top: targetRect.top,
+        bottom: targetRect.bottom,
+        left: targetRect.left,
+        width: targetRect.width,
+        height: targetRect.height
+      },
+      popupRect: {
+        width: popupRect.width,
+        height: popupRect.height
+      },
+      scrollTop: scrollTop,
+      position: position
+    });
     
     let top = 0;
     let left = 0;
@@ -269,32 +287,32 @@ export class DynamicPopupService {
     switch (position) {
       case 'top':
         // Posicionar encima del elemento con un pequeño espacio
-        top = targetRect.top + scrollTop - popupRect.height - 8;
-        left = targetRect.left + scrollLeft + (targetRect.width - popupRect.width) / 2;
+        top = targetRect.top - popupRect.height - 12;
+        left = targetRect.left + (targetRect.width - popupRect.width) / 2;
         break;
         
       case 'bottom':
         // Posicionar debajo del elemento con un pequeño espacio
-        top = targetRect.bottom + scrollTop + 8;
-        left = targetRect.left + scrollLeft + (targetRect.width - popupRect.width) / 2;
+        top = targetRect.bottom + 12;
+        left = targetRect.left + (targetRect.width - popupRect.width) / 2;
         break;
         
       case 'left':
         // Posicionar a la izquierda del elemento
-        top = targetRect.top + scrollTop + (targetRect.height - popupRect.height) / 2;
-        left = targetRect.left + scrollLeft - popupRect.width - 8;
+        top = targetRect.top + (targetRect.height - popupRect.height) / 2;
+        left = targetRect.left - popupRect.width - 12;
         break;
         
       case 'right':
         // Posicionar a la derecha del elemento
-        top = targetRect.top + scrollTop + (targetRect.height - popupRect.height) / 2;
-        left = targetRect.right + scrollLeft + 8;
+        top = targetRect.top + (targetRect.height - popupRect.height) / 2;
+        left = targetRect.right + 12;
         break;
         
       case 'center':
         // Centrar en la pantalla
-        top = window.innerHeight / 2 - popupRect.height / 2 + scrollTop;
-        left = window.innerWidth / 2 - popupRect.width / 2 + scrollLeft;
+        top = window.innerHeight / 2 - popupRect.height / 2;
+        left = window.innerWidth / 2 - popupRect.width / 2;
         break;
     }
     
@@ -314,84 +332,107 @@ export class DynamicPopupService {
       top = viewportHeight - popupRect.height - 10;
     }
     
+    console.log('Calculated popup position:', { top, left });
+    
     // Aplicar posición
-    popup.style.position = 'absolute';
+    popup.style.position = 'fixed';
     popup.style.top = `${Math.max(0, top)}px`;
     popup.style.left = `${Math.max(0, left)}px`;
     
     // Agregar flecha indicadora si es necesario
     this.addArrowIndicator(popup, position, targetRect, popupRect);
+    
+    console.log('Popup positioned successfully');
   }
 
   /**
-   * Hace scroll para que el popup sea visible en la pantalla
+   * Hace scroll hacia el target y luego posiciona el popup
    */
-  private scrollToPopup(popup: HTMLElement, target: Element, position: string): void {
+  private scrollToTargetAndPositionPopup(popup: HTMLElement, target: Element, position: string): void {
     const targetRect = target.getBoundingClientRect();
-    const popupRect = popup.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    
+    // Calcular la posición absoluta del target
+    const targetTop = targetRect.top + scrollTop;
+    const targetLeft = targetRect.left + scrollLeft;
+    
+    // Verificar si el elemento ya está visible en el viewport
+    const isElementVisible = this.isElementInViewport(targetRect.top, targetRect.bottom, targetRect.left, targetRect.right);
+    
+    if (isElementVisible) {
+      // Si el elemento ya está visible, posicionar el popup inmediatamente
+      console.log('Element already visible, positioning popup immediately');
+      this.positionPopup(popup, target, position);
+      popup.style.opacity = '1';
+      popup.style.visibility = 'visible';
+      popup.style.transition = 'opacity 0.3s ease';
+      return;
+    }
+    
+    // Hacer scroll hacia la posición del target
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
     
-    // Calcular la posición del popup después del posicionamiento
-    let popupTop = 0;
-    let popupLeft = 0;
+    let targetScrollTop = scrollTop;
+    let targetScrollLeft = scrollLeft;
     
-    switch (position) {
-      case 'top':
-        popupTop = targetRect.top - popupRect.height - 8;
-        popupLeft = targetRect.left + (targetRect.width - popupRect.width) / 2;
-        break;
-      case 'bottom':
-        popupTop = targetRect.bottom + 8;
-        popupLeft = targetRect.left + (targetRect.width - popupRect.width) / 2;
-        break;
-      case 'left':
-        popupTop = targetRect.top + (targetRect.height - popupRect.height) / 2;
-        popupLeft = targetRect.left - popupRect.width - 8;
-        break;
-      case 'right':
-        popupTop = targetRect.top + (targetRect.height - popupRect.height) / 2;
-        popupLeft = targetRect.right + 8;
-        break;
-      case 'center':
-        popupTop = viewportHeight / 2 - popupRect.height / 2;
-        popupLeft = viewportWidth / 2 - popupRect.width / 2;
-        break;
+    // Ajustar scroll vertical para centrar el target en la vista
+    if (position === 'bottom') {
+      // Para popup abajo, hacer scroll para que el target esté visible arriba
+      targetScrollTop = targetTop - 150; // Reducir margen superior para scroll más rápido
+    } else if (position === 'top') {
+      // Para popup arriba, hacer scroll para que el target esté visible abajo
+      targetScrollTop = targetTop + targetRect.height - viewportHeight + 150; // Reducir margen inferior
+    } else {
+      // Para otras posiciones, centrar el target
+      targetScrollTop = targetTop - (viewportHeight / 2) + (targetRect.height / 2);
     }
     
-    // Calcular si el popup está fuera de la vista
-    const isPopupVisible = this.isElementInViewport(popupTop, popupTop + popupRect.height, popupLeft, popupLeft + popupRect.width);
+    // Asegurar que el scroll no sea negativo
+    targetScrollTop = Math.max(0, targetScrollTop);
     
-    if (!isPopupVisible) {
-      // Calcular el scroll necesario
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    console.log('Scrolling to target:', {
+      currentScroll: scrollTop,
+      targetScroll: targetScrollTop,
+      targetTop: targetTop,
+      position: position
+    });
+    
+    // Realizar el scroll suave
+    this.smoothScrollTo(targetScrollTop, targetScrollLeft);
+    
+    // Posicionar el popup después del scroll con un enfoque más directo
+    setTimeout(() => {
+      console.log('Positioning popup after scroll');
+      this.positionPopup(popup, target, position);
       
-      let targetScrollTop = scrollTop;
-      let targetScrollLeft = scrollLeft;
+      // Mostrar el popup inmediatamente después de posicionarlo
+      popup.style.opacity = '1';
+      popup.style.visibility = 'visible';
+      popup.style.transition = 'opacity 0.3s ease';
       
-      // Ajustar scroll vertical
-      if (popupTop < 0) {
-        // Popup está arriba de la vista
-        targetScrollTop = scrollTop + popupTop - 20; // 20px de margen
-      } else if (popupTop + popupRect.height > viewportHeight) {
-        // Popup está abajo de la vista
-        targetScrollTop = scrollTop + (popupTop + popupRect.height - viewportHeight) + 20;
-      }
-      
-      // Ajustar scroll horizontal
-      if (popupLeft < 0) {
-        // Popup está a la izquierda de la vista
-        targetScrollLeft = scrollLeft + popupLeft - 20;
-      } else if (popupLeft + popupRect.width > viewportWidth) {
-        // Popup está a la derecha de la vista
-        targetScrollLeft = scrollLeft + (popupLeft + popupRect.width - viewportWidth) + 20;
-      }
-      
-      // Realizar el scroll suave
-      this.smoothScrollTo(targetScrollTop, targetScrollLeft);
-    }
+      // Verificar que el popup esté visible y reposicionar si es necesario
+      setTimeout(() => {
+        const popupRect = popup.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        
+        console.log('Popup positioned at:', {
+          top: popupRect.top,
+          left: popupRect.left,
+          visible: popupRect.top > 0 && popupRect.left > 0
+        });
+        
+        // Verificar si el popup está en la posición correcta y reposicionar si es necesario
+        if (position === 'bottom' && popupRect.top < targetRect.bottom + 50) {
+          console.log('Repositioning popup - too close to target');
+          this.positionPopup(popup, target, position);
+        }
+      }, 100);
+    }, 300); // Reducir aún más el tiempo de espera
   }
+
+
 
   /**
    * Verifica si un elemento está en el viewport
@@ -413,15 +454,33 @@ export class DynamicPopupService {
     const scrollDiffTop = targetScrollTop - currentScrollTop;
     const scrollDiffLeft = targetScrollLeft - currentScrollLeft;
     
-    if (Math.abs(scrollDiffTop) > 5 || Math.abs(scrollDiffLeft) > 5) {
-      // Solo hacer scroll si hay una diferencia significativa
+    // Hacer scroll si hay una diferencia significativa (más de 10px)
+    if (Math.abs(scrollDiffTop) > 10 || Math.abs(scrollDiffLeft) > 10) {
+      console.log('Scrolling to popup:', {
+        current: { top: currentScrollTop, left: currentScrollLeft },
+        target: { top: targetScrollTop, left: targetScrollLeft },
+        diff: { top: scrollDiffTop, left: scrollDiffLeft }
+      });
+      
+      // Agregar clase de scrolling
+      document.documentElement.classList.add('scrolling');
+      document.body.classList.add('scrolling');
+      
       window.scrollTo({
         top: targetScrollTop,
         left: targetScrollLeft,
         behavior: 'smooth'
       });
+      
+      // Remover clase de scrolling después de un tiempo
+      setTimeout(() => {
+        document.documentElement.classList.remove('scrolling');
+        document.body.classList.remove('scrolling');
+      }, 1000);
     }
   }
+
+
 
   /**
    * Agrega una flecha indicadora al popup
@@ -517,7 +576,7 @@ export class DynamicPopupService {
       maxWidth: style?.maxWidth || '300px',
       zIndex: style?.zIndex || '9999',
       padding: '16px',
-      position: 'fixed',
+      position: 'absolute',
       fontFamily: 'Arial, sans-serif',
       fontSize: '14px',
       lineHeight: '1.4'
@@ -633,30 +692,59 @@ export class DynamicPopupService {
         ]
       };
     } else if (popup.type === 'info') {
-      // Popup de información - dura 5 segundos
-      config = {
-        id: `info-${Date.now()}`,
-        target: targetSelector,
-        content: {
-          type: 'text',
-          title: popup.title,
-          message: popup.message
-        },
-        position: 'right', // Por defecto a la derecha del elemento
-        duration: 5000, // 5 segundos
-        style: {
-          backgroundColor: '#f8f9fa',
-          borderColor: '#3498db',
-          maxWidth: '280px'
-        },
-        actions: [
-          {
-            label: 'Cerrar',
-            action: 'close',
-            style: 'secondary'
-          }
-        ]
-      };
+      // Popup de información - verificar si es para localizar un producto
+      if (popup.target === 'product' && popup.targetInfo?.ID) {
+        // Es un popup para localizar un producto - posicionarlo debajo del producto
+        config = {
+          id: `info-${Date.now()}`,
+          target: targetSelector,
+          content: {
+            type: 'text',
+            title: popup.title,
+            message: popup.message
+          },
+          position: 'bottom', // Posicionar debajo del producto
+          duration: 5000, // 5 segundos
+          style: {
+            backgroundColor: '#f8f9fa',
+            borderColor: '#3498db',
+            maxWidth: '280px',
+            zIndex: 10000
+          },
+          actions: [
+            {
+              label: 'Cerrar',
+              action: 'close',
+              style: 'secondary'
+            }
+          ]
+        };
+      } else {
+        // Popup de información normal - dura 5 segundos
+        config = {
+          id: `info-${Date.now()}`,
+          target: targetSelector,
+          content: {
+            type: 'text',
+            title: popup.title,
+            message: popup.message
+          },
+          position: 'right', // Por defecto a la derecha del elemento
+          duration: 5000, // 5 segundos
+          style: {
+            backgroundColor: '#f8f9fa',
+            borderColor: '#3498db',
+            maxWidth: '280px'
+          },
+          actions: [
+            {
+              label: 'Cerrar',
+              action: 'close',
+              style: 'secondary'
+            }
+          ]
+        };
+      }
     } else {
       console.error('Tipo de popup no reconocido:', popup.type);
       return null;
@@ -871,8 +959,10 @@ export class DynamicPopupService {
     // Reposicionar el popup
     this.positionPopup(popup.element, targetElement, popup.config.position);
     
-    // Hacer scroll para que el popup sea visible
-    this.scrollToPopup(popup.element, targetElement, popup.config.position);
+    // Hacer scroll para que el popup sea visible (con pequeño delay para asegurar posicionamiento)
+    setTimeout(() => {
+      this.scrollToTargetAndPositionPopup(popup.element, targetElement, popup.config.position);
+    }, 100);
     
     // Actualizar la instancia
     popup.currentStep = stepIndex;
@@ -978,6 +1068,27 @@ export class DynamicPopupService {
   }
 
   /**
+   * Método de prueba para crear un popup de información de producto
+   */
+  createTestProductInfoPopup(): PopupInstance | null {
+    const testResponse = {
+      response: "Aquí tienes la laptop.",
+      popup: {
+        type: "info",
+        target: "product",
+        title: "Laptop Dell Inspiron 15",
+        message: "Este es el producto que coincide con tu búsqueda.",
+        targetInfo: {
+          ID: 5
+        }
+      }
+    };
+
+    console.log('Creating test product info popup...');
+    return this.createPopupFromApiResponse(testResponse);
+  }
+
+  /**
    * Genera un selector específico basado en el target clave
    */
   private generateSpecificSelector(target: string, targetInfo?: any): string {
@@ -987,7 +1098,46 @@ export class DynamicPopupService {
       // Productos
       case 'product':
         if (targetInfo?.ID) {
-          return `[data-product-id="${targetInfo.ID}"]`;
+          console.log(`Looking for product with ID: ${targetInfo.ID}`);
+          
+          // Intentar múltiples selectores para encontrar el producto
+          const selectors = [
+            `[data-product-id="${targetInfo.ID}"]`,
+            `.product-card[data-product-id="${targetInfo.ID}"]`,
+            `[data-product-id="${targetInfo.ID}"].product-card`,
+            // Buscar por índice (ID como índice)
+            `.product-card:nth-child(${targetInfo.ID})`,
+            // Buscar por índice + 1 (si los IDs empiezan en 1)
+            `.product-card:nth-child(${targetInfo.ID + 1})`,
+            // Buscar por índice - 1 (si los IDs empiezan en 0)
+            `.product-card:nth-child(${targetInfo.ID - 1})`
+          ];
+          
+          // Verificar cuál selector funciona
+          for (const selector of selectors) {
+            const element = document.querySelector(selector);
+            if (element) {
+              console.log(`Found product with selector: ${selector}`);
+              return selector;
+            }
+          }
+          
+          // Si no se encuentra con selectores específicos, buscar en todos los productos
+          const allProducts = document.querySelectorAll('.product-card');
+          console.log(`Found ${allProducts.length} total products`);
+          
+          if (allProducts.length > 0) {
+            // Usar el producto más cercano al ID especificado
+            const targetIndex = Math.min(targetInfo.ID - 1, allProducts.length - 1);
+            const targetProduct = allProducts[targetIndex];
+            if (targetProduct) {
+              console.log(`Using product at index ${targetIndex} for ID ${targetInfo.ID}`);
+              return `.product-card:nth-child(${targetIndex + 1})`;
+            }
+          }
+          
+          console.warn(`No product found with ID ${targetInfo.ID}, using fallback`);
+          return '.product-card:first-child';
         }
         return '.product-card:first-child';
       
