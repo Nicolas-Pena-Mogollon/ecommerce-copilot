@@ -27,7 +27,7 @@ export class ProductListComponent implements OnInit, OnDestroy, AfterViewInit {
   private uiContextService = inject(UiContextService);
   private searchSubscription?: Subscription;
   private elementRef = inject(ElementRef);
-  private navbarHeight = 70; // Altura del navbar
+  private navbarHeight = 80; // Altura del navbar
   private lastScrollTop = 0;
   private navbarVisible = true;
 
@@ -89,8 +89,8 @@ export class ProductListComponent implements OnInit, OnDestroy, AfterViewInit {
     if (filtersSidebar) {
       if (this.navbarVisible) {
         // Navbar visible - posición normal
-        filtersSidebar.style.top = '90px';
-        filtersSidebar.style.maxHeight = 'calc(100vh - 110px)';
+        filtersSidebar.style.top = '100px';
+        filtersSidebar.style.maxHeight = 'calc(100vh - 120px)';
       } else {
         // Navbar oculto - subir los filtros
         filtersSidebar.style.top = '20px';
