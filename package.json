@@ -6,9 +6,12 @@
     "start": "ng serve",
     "build": "ng build",
     "build:prod": "ng build --configuration production",
+    "build:vercel": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:e-commerce-app": "node dist/e-commerce-app/server/server.mjs"
+    "serve:ssr:e-commerce-app": "node dist/e-commerce-app/server/server.mjs",
+    "vercel-build": "npm run build:vercel",
+    "postinstall": "npm run build:vercel"
   },
   "private": true,
   "dependencies": {
