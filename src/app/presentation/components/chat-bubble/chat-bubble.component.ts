@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UiContextService } from '../../../application/services/ui-context.service';
@@ -55,7 +55,11 @@ import { firstValueFrom } from 'rxjs';
       <!-- Ventana del chat -->
       <div class="chat-window" *ngIf="isChatOpen">
         <!-- Chat de voz -->
-        <app-voice-chat *ngIf="currentAgentType === 'voice'" (closeChat)="closeChat()"></app-voice-chat>
+        <app-voice-chat 
+          *ngIf="currentAgentType === 'voice'" 
+          (closeChat)="closeChat()"
+          #voiceChatRef
+        ></app-voice-chat>
         
         <!-- Chat tradicional y de ventas -->
         <div class="chat-container" *ngIf="currentAgentType !== 'voice'">
@@ -108,6 +112,9 @@ export class ChatBubbleComponent {
   currentAgentType: 'chat' | 'voice' | 'sales' = 'chat';
   userInput = '';
   messages: Array<{text: string; isUser: boolean; time: string}> = [];
+  
+  // Referencia al componente de voz para reinicialización
+  @ViewChild('voiceChatRef') voiceChatComponent: any = null;
 
   toggleAgentMenu(): void {
     this.isAgentMenuOpen = !this.isAgentMenuOpen;
@@ -130,12 +137,28 @@ export class ChatBubbleComponent {
     if (agentType !== 'voice') {
       this.addWelcomeMessage();
     }
+    
+    // Si es chat de voz, reinicializar después de un breve delay
+    if (agentType === 'voice') {
+      setTimeout(async () => {
+        if (this.voiceChatComponent) {
+          await this.voiceChatComponent.reinitialize();
+        }
+      }, 200); // Aumentado el delay para asegurar que el componente esté listo
+    }
   }
 
   closeChat(): void {
     this.isChatOpen = false;
     this.messages = [];
     this.userInput = '';
+    
+    // Si es chat de voz, limpiar el servicio de voz
+    if (this.currentAgentType === 'voice') {
+      // El componente de voz se encargará de la limpieza en ngOnDestroy
+      // pero también podemos limpiar la referencia
+      this.voiceChatComponent = null;
+    }
   }
 
   private addWelcomeMessage(): void {

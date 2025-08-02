@@ -58,6 +58,21 @@ export interface VoiceServicePort {
   onSpeechError(callback: (error: string) => void): void;
   onSpeechEnd(callback: () => void): void;
   onSilenceTimeout(callback: () => void): void;
+
+  /**
+   * Limpia completamente el reconocimiento de voz
+   */
+  cleanupSpeechRecognition(): void;
+
+  /**
+   * Reinicializa el reconocimiento de voz después de una limpieza
+   */
+  reinitializeSpeechRecognition(): void;
+
+  /**
+   * Método de debug para verificar el estado completo
+   */
+  debugState(): void;
 }
 
 export const VOICE_SERVICE_PORT = new InjectionToken<VoiceServicePort>('VoiceServicePort'); 

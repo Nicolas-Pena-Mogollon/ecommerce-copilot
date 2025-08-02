@@ -1,0 +1,123 @@
+<div class="voice-chat-container">
+  <!-- Header similar al chat de texto pero en azul -->
+  <div class="voice-chat-header">
+    <div class="header-info">
+      <span class="agent-type-icon">🎤</span>
+      <h3>Asistente de Voz</h3>
+    </div>
+    <button class="close-btn" (click)="closeVoiceChat()">×</button>
+  </div>
+
+  <!-- Contenido principal del chat de voz -->
+  <div class="voice-content">
+    <!-- Indicador de estado -->
+    <div class="status-indicator" *ngIf="state.hasPermission">
+      <div class="status-card" [class.active]="state.isListening || state.isProcessing || isAssistantSpeaking()">
+        <!-- Estado: Listo -->
+        <div class="status-ready" *ngIf="!state.isListening && !state.isProcessing && !isAssistantSpeaking()">
+          <div class="status-dot ready"></div>
+          <span class="status-text">Listo para escuchar</span>
+        </div>
+        
+        <!-- Estado: Escuchando -->
+        <div class="status-listening" *ngIf="state.isListening">
+          <div class="status-dot listening"></div>
+          <span class="status-text">Escuchando... (Presiona para detener)</span>
+        </div>
+        
+        <!-- Estado: Procesando -->
+        <div class="status-processing" *ngIf="state.isProcessing">
+          <div class="status-dot processing"></div>
+          <span class="status-text">Procesando tu consulta...</span>
+        </div>
+        
+        <!-- Estado: Hablando -->
+        <div class="status-speaking" *ngIf="isAssistantSpeaking()">
+          <div class="status-dot speaking"></div>
+          <span class="status-text">Respondiendo... (Presiona para interrumpir)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controles principales -->
+    <div class="voice-controls">
+      <!-- Botón principal de micrófono -->
+      <button 
+        class="mic-button"
+        [class.listening]="state.isListening"
+        [class.processing]="state.isProcessing"
+        [class.speaking]="isAssistantSpeaking()"
+        [disabled]="!state.hasPermission || !state.isSupported"
+        (click)="toggleListening()"
+        [title]="getMicButtonTitle()"
+      >
+        <span class="mic-icon" *ngIf="!isAssistantSpeaking()">🎤</span>
+        <span class="mic-icon" *ngIf="isAssistantSpeaking()">🔊</span>
+        
+        <!-- Ondas de animación -->
+        <div class="mic-waves" *ngIf="state.isListening || state.isProcessing || isAssistantSpeaking()">
+          <div class="wave"></div>
+          <div class="wave"></div>
+          <div class="wave"></div>
+        </div>
+      </button>
+
+      <!-- Texto reconocido -->
+      <div class="recognized-text" *ngIf="state.lastRecognizedText">
+        <div class="text-container">
+          <span class="text-label">Texto reconocido:</span>
+          <p class="text-content">{{ state.lastRecognizedText }}</p>
+        </div>
+      </div>
+
+      <!-- Botón para detener síntesis -->
+      <button 
+        class="stop-button"
+        (click)="stopSpeaking()"
+        title="Detener respuesta"
+        *ngIf="isAssistantSpeaking()"
+      >
+        🔇
+      </button>
+    </div>
+
+
+
+    <!-- Mensaje de procesamiento -->
+    <div class="processing-message" *ngIf="state.isProcessing">
+      <div class="message-content system">
+        <div class="message-text">
+          <div class="processing-indicator">
+            <div class="processing-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            Procesando tu consulta...
+          </div>
+                 </div>
+         <div class="message-time">{{ getCurrentTime() }}</div>
+       </div>
+    </div>
+
+    <!-- Instrucciones -->
+    <div class="instructions-container">
+      <!-- Permisos necesarios -->
+      <div class="permission-notice" *ngIf="!state.hasPermission">
+        <div class="notice-icon">⚠️</div>
+        <div class="notice-content">
+          <p>Para usar el asistente de voz, necesitas dar permiso para acceder al micrófono.</p>
+          <button class="permission-button" (click)="requestPermission()">
+            Dar Permiso de Micrófono
+          </button>
+        </div>
+      </div>
+
+      <!-- Instrucciones de uso - SOLO cuando no hay texto reconocido y no está procesando -->
+      <div class="usage-instructions" *ngIf="state.hasPermission && !state.lastRecognizedText && !state.isListening && !state.isProcessing && !isAssistantSpeaking()">
+        <div class="instruction-icon">💡</div>
+        <p>Presiona el botón del micrófono y di lo que necesites. Presiona nuevamente para detener y obtener tu respuesta.</p>
+      </div>
+    </div>
+  </div>
+</div> 
