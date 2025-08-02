@@ -92,6 +92,9 @@ export class DynamicPopupService {
       // Agregar al DOM
       document.body.appendChild(popupElement);
       
+      // Hacer scroll para que el popup sea visible
+      this.scrollToPopup(popupElement, targetElement, config.position);
+      
       // Crear instancia
       const popupInstance: PopupInstance = {
         id: config.id,
@@ -318,6 +321,106 @@ export class DynamicPopupService {
     
     // Agregar flecha indicadora si es necesario
     this.addArrowIndicator(popup, position, targetRect, popupRect);
+  }
+
+  /**
+   * Hace scroll para que el popup sea visible en la pantalla
+   */
+  private scrollToPopup(popup: HTMLElement, target: Element, position: string): void {
+    const targetRect = target.getBoundingClientRect();
+    const popupRect = popup.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    // Calcular la posición del popup después del posicionamiento
+    let popupTop = 0;
+    let popupLeft = 0;
+    
+    switch (position) {
+      case 'top':
+        popupTop = targetRect.top - popupRect.height - 8;
+        popupLeft = targetRect.left + (targetRect.width - popupRect.width) / 2;
+        break;
+      case 'bottom':
+        popupTop = targetRect.bottom + 8;
+        popupLeft = targetRect.left + (targetRect.width - popupRect.width) / 2;
+        break;
+      case 'left':
+        popupTop = targetRect.top + (targetRect.height - popupRect.height) / 2;
+        popupLeft = targetRect.left - popupRect.width - 8;
+        break;
+      case 'right':
+        popupTop = targetRect.top + (targetRect.height - popupRect.height) / 2;
+        popupLeft = targetRect.right + 8;
+        break;
+      case 'center':
+        popupTop = viewportHeight / 2 - popupRect.height / 2;
+        popupLeft = viewportWidth / 2 - popupRect.width / 2;
+        break;
+    }
+    
+    // Calcular si el popup está fuera de la vista
+    const isPopupVisible = this.isElementInViewport(popupTop, popupTop + popupRect.height, popupLeft, popupLeft + popupRect.width);
+    
+    if (!isPopupVisible) {
+      // Calcular el scroll necesario
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+      
+      let targetScrollTop = scrollTop;
+      let targetScrollLeft = scrollLeft;
+      
+      // Ajustar scroll vertical
+      if (popupTop < 0) {
+        // Popup está arriba de la vista
+        targetScrollTop = scrollTop + popupTop - 20; // 20px de margen
+      } else if (popupTop + popupRect.height > viewportHeight) {
+        // Popup está abajo de la vista
+        targetScrollTop = scrollTop + (popupTop + popupRect.height - viewportHeight) + 20;
+      }
+      
+      // Ajustar scroll horizontal
+      if (popupLeft < 0) {
+        // Popup está a la izquierda de la vista
+        targetScrollLeft = scrollLeft + popupLeft - 20;
+      } else if (popupLeft + popupRect.width > viewportWidth) {
+        // Popup está a la derecha de la vista
+        targetScrollLeft = scrollLeft + (popupLeft + popupRect.width - viewportWidth) + 20;
+      }
+      
+      // Realizar el scroll suave
+      this.smoothScrollTo(targetScrollTop, targetScrollLeft);
+    }
+  }
+
+  /**
+   * Verifica si un elemento está en el viewport
+   */
+  private isElementInViewport(top: number, bottom: number, left: number, right: number): boolean {
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    return top >= 0 && bottom <= viewportHeight && left >= 0 && right <= viewportWidth;
+  }
+
+  /**
+   * Realiza scroll suave a la posición especificada
+   */
+  private smoothScrollTo(targetScrollTop: number, targetScrollLeft: number): void {
+    const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const currentScrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    
+    const scrollDiffTop = targetScrollTop - currentScrollTop;
+    const scrollDiffLeft = targetScrollLeft - currentScrollLeft;
+    
+    if (Math.abs(scrollDiffTop) > 5 || Math.abs(scrollDiffLeft) > 5) {
+      // Solo hacer scroll si hay una diferencia significativa
+      window.scrollTo({
+        top: targetScrollTop,
+        left: targetScrollLeft,
+        behavior: 'smooth'
+      });
+    }
   }
 
   /**
@@ -767,6 +870,9 @@ export class DynamicPopupService {
     
     // Reposicionar el popup
     this.positionPopup(popup.element, targetElement, popup.config.position);
+    
+    // Hacer scroll para que el popup sea visible
+    this.scrollToPopup(popup.element, targetElement, popup.config.position);
     
     // Actualizar la instancia
     popup.currentStep = stepIndex;
