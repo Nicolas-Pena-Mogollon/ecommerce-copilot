@@ -1,13 +1,15 @@
 import { Component } from '@angular/core';
-import { ChatComponent } from './components/chat/chat.component';
-import { ProductListComponent } from './components/product-list/product-list.component';
-import { CartSummary } from './components/cart-summary/cart-summary';
+import { RouterOutlet } from '@angular/router';
+import { NavbarComponent } from './presentation/components/navbar/navbar.component';
+import { ChatBubbleComponent } from './presentation/components/chat-bubble/chat-bubble.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [ChatComponent, ProductListComponent, CartSummary],
+  imports: [RouterOutlet, NavbarComponent, ChatBubbleComponent],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
+  styleUrl: './app.component.scss'
 })
-export class AppComponent {}
+export class AppComponent {
+  title = 'IndraShop';
+}
