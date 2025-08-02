@@ -1,8 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './presentation/components/navbar/navbar.component';
 import { ChatBubbleComponent } from './presentation/components/chat-bubble/chat-bubble.component';
-import { DynamicPopupService } from './application/services/dynamic-popup.service';
 
 @Component({
   selector: 'app-root',
@@ -13,10 +12,4 @@ import { DynamicPopupService } from './application/services/dynamic-popup.servic
 })
 export class AppComponent {
   title = 'IndraShop';
-  private popupService = inject(DynamicPopupService);
-
-  testPopup(): void {
-    console.log('Testing popup...');
-    this.popupService.createTestProductInfoPopup();
-  }
 }
