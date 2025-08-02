@@ -19,8 +19,7 @@ import { firstValueFrom } from 'rxjs';
         (click)="toggleAgentMenu()"
         [class.expanded]="isAgentMenuOpen"
       >
-        <span class="agent-icon">🤖</span>
-        <span class="agent-label">Agente de Ventas</span>
+        <img src="/logos/agente.png" alt="Agente de Ventas" class="agent-icon">
       </button>
 
       <!-- Menú circular de agentes -->
@@ -31,8 +30,7 @@ import { firstValueFrom } from 'rxjs';
           (click)="openChat('chat')"
           title="Chat de Ayuda"
         >
-          <span class="option-icon">💬</span>
-          <span class="option-label">Chat</span>
+          <img src="/logos/chat.png" alt="Chat" class="option-icon">
         </button>
 
         <!-- Asistente de voz -->
@@ -41,18 +39,16 @@ import { firstValueFrom } from 'rxjs';
           (click)="openChat('voice')"
           title="Asistente de Voz"
         >
-          <span class="option-icon">🎤</span>
-          <span class="option-label">Voz</span>
+          <img src="/logos/voz.png" alt="Voz" class="option-icon">
         </button>
 
-        <!-- Agente de ventas -->
+        <!-- Botón de salir -->
         <button 
           class="agent-option sales-agent"
-          (click)="openChat('sales')"
-          title="Agente de Ventas"
+          (click)="closeMenu()"
+          title="Cerrar menú"
         >
-          <span class="option-icon">🛒</span>
-          <span class="option-label">Ventas</span>
+          <span class="option-icon">✕</span>
         </button>
       </div>
 
@@ -62,7 +58,7 @@ import { firstValueFrom } from 'rxjs';
         <app-voice-chat *ngIf="currentAgentType === 'voice'" (closeChat)="closeChat()"></app-voice-chat>
         
         <!-- Chat tradicional y de ventas -->
-        <div *ngIf="currentAgentType !== 'voice'">
+        <div class="chat-container" *ngIf="currentAgentType !== 'voice'">
           <div class="chat-header">
             <div class="header-info">
               <span class="agent-type-icon">{{ getAgentIcon() }}</span>
@@ -95,10 +91,6 @@ import { firstValueFrom } from 'rxjs';
             <button class="send-btn" (click)="sendMessage()">
               {{ getSendButtonIcon() }}
             </button>
-            <!-- Botón de prueba temporal -->
-            <button class="test-btn" (click)="testStepPopup()" style="background: #e74c3c; color: white; padding: 5px 10px; border-radius: 4px; margin-left: 5px;">
-              Test Steps
-            </button>
           </div>
         </div>
       </div>
@@ -122,6 +114,11 @@ export class ChatBubbleComponent {
     if (!this.isAgentMenuOpen) {
       this.closeChat();
     }
+  }
+
+  closeMenu(): void {
+    this.isAgentMenuOpen = false;
+    this.closeChat();
   }
 
   openChat(agentType: 'chat' | 'voice' | 'sales'): void {
@@ -153,6 +150,9 @@ export class ChatBubbleComponent {
       isUser: false,
       time: this.formatTime(new Date())
     });
+
+    // Scroll al mensaje de bienvenida
+    setTimeout(() => this.scrollToBottom(), 100);
   }
 
   async sendMessage(): Promise<void> {
@@ -167,6 +167,9 @@ export class ChatBubbleComponent {
 
     const userInput = this.userInput;
     this.userInput = '';
+
+    // Scroll al último mensaje después de enviar
+    setTimeout(() => this.scrollToBottom(), 100);
 
     await this.processMessageByAgent(userInput);
   }
@@ -204,6 +207,9 @@ export class ChatBubbleComponent {
       isUser: false,
       time: this.formatTime(new Date())
     });
+
+    // Scroll al último mensaje después de recibir respuesta
+    setTimeout(() => this.scrollToBottom(), 100);
   }
 
   private async processChatAgent(userInput: string, uiContext: any): Promise<string> {
@@ -324,9 +330,9 @@ export class ChatBubbleComponent {
 
   getSendButtonIcon(): string {
     const icons = {
-      chat: '📤',
+      chat: '➤',
       voice: '🎤',
-      sales: '💼'
+      sales: '➤'
     };
     return icons[this.currentAgentType];
   }
@@ -348,5 +354,15 @@ export class ChatBubbleComponent {
       minute: '2-digit',
       hour12: true
     });
+  }
+
+  /**
+   * Hace scroll al último mensaje del chat
+   */
+  private scrollToBottom(): void {
+    const chatMessages = document.querySelector('.chat-messages');
+    if (chatMessages) {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
   }
 } 
