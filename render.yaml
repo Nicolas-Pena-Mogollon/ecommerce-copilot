@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: ecommerce-copilot
+    runtime: node
+    buildCommand: npm ci && npm run build
+    startCommand: npm run serve:ssr:e-commerce-app
+    envVars:
+      - key: NODE_ENV
+        value: production
+    healthCheckPath: /
+    autoDeploy: true 
