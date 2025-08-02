@@ -55,12 +55,12 @@ export class WebSpeechService implements VoiceServicePort {
       this.recognition.onresult = (event: any) => {
         // Solo procesar si no estamos procesando ya un resultado
         if (this.isProcessingResult) {
-          console.log('Ya se está procesando un resultado, ignorando nuevo texto');
           return;
         }
 
         // Verificar si es un resultado final
         const isFinal = event.results[event.results.length - 1].isFinal;
+        
         if (!isFinal) {
           return; // No procesar resultados intermedios
         }
@@ -70,7 +70,6 @@ export class WebSpeechService implements VoiceServicePort {
         this.clearSilenceTimeout(); // Limpiar timeout cuando se detecta voz
         
         const transcript = event.results[event.results.length - 1][0].transcript; // Obtener el último resultado
-        console.log('Texto reconocido (final):', transcript);
         
         if (this.onSpeechResultCallback) {
           this.onSpeechResultCallback(transcript);
@@ -146,6 +145,10 @@ export class WebSpeechService implements VoiceServicePort {
       return;
     }
 
+    if (!this.recognition) {
+      throw new Error('Reconocimiento de voz no inicializado');
+    }
+
     try {
       this.recognition.start();
       this.startSilenceTimeout();
@@ -176,9 +179,48 @@ export class WebSpeechService implements VoiceServicePort {
 
   stopSpeechRecognition(): void {
     this.clearSilenceTimeout(); // Limpiar timeout al detener
-    if (this.recognition && this.recognitionState === 'listening') {
-      this.recognition.stop();
+    if (this.recognition) {
+      try {
+        this.recognition.stop();
+      } catch (error) {
+        console.log('Error al detener reconocimiento:', error);
+      }
     }
+    this.recognitionState = 'inactive';
+    this.isProcessingResult = false;
+  }
+
+  /**
+   * Limpia completamente el reconocimiento de voz
+   */
+  cleanupSpeechRecognition(): void {
+    this.clearSilenceTimeout();
+    this.stopSpeechRecognition();
+    this.stopSpeaking();
+    
+    // Limpiar callbacks
+    this.onSpeechResultCallback = null;
+    this.onSpeechErrorCallback = null;
+    this.onSpeechEndCallback = null;
+    this.onSilenceTimeoutCallback = null;
+    
+    // Resetear estado
+    this.recognitionState = 'inactive';
+    this.isProcessingResult = false;
+    this.isAssistantSpeaking = false;
+  }
+
+  /**
+   * Reinicializa el reconocimiento de voz después de una limpieza
+   */
+  reinitializeSpeechRecognition(): void {
+    // Limpiar estado antes de reinicializar
+    this.recognitionState = 'inactive';
+    this.isProcessingResult = false;
+    this.isAssistantSpeaking = false;
+    
+    // Reinicializar la instancia del reconocimiento
+    this.initializeSpeechRecognition();
   }
 
   async speakText(text: string): Promise<void> {
@@ -269,5 +311,12 @@ export class WebSpeechService implements VoiceServicePort {
 
   onSilenceTimeout(callback: () => void): void {
     this.onSilenceTimeoutCallback = callback;
+  }
+
+  /**
+   * Método de debug para verificar el estado completo
+   */
+  debugState(): void {
+    // Método de debug removido para limpiar logs
   }
 } 

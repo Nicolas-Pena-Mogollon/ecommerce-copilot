@@ -13,10 +13,10 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  width: 80px;
-  height: 80px;
+  background: white;
+  color: #333;
+  width: 120px;
+  height: 120px;
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -24,6 +24,7 @@
   transition: all 0.3s ease;
   user-select: none;
   font-weight: 600;
+  overflow: hidden;
 
   &:hover {
     transform: translateY(-2px);
@@ -31,12 +32,26 @@
   }
 
   &.expanded {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: white;
     transform: scale(1.05);
   }
 
   .agent-icon {
     font-size: 1.5rem;
+    width: 150%;
+    height: 150%;
+    object-fit: cover;
+    border-radius: 50%;
+    margin: -25%;
+    
+    // Para imágenes específicamente
+    &[src*=".png"], &[src*=".jpg"], &[src*=".jpeg"], &[src*=".svg"] {
+      width: 160%;
+      height: 160%;
+      object-fit: cover;
+      border-radius: 50%;
+      margin: -40%;
+    }
   }
 
   .agent-label {
@@ -52,8 +67,8 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 280px;
-  height: 200px;
+  width: 420px;
+  height: 300px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,6 +113,7 @@
 
   .option-icon {
     font-size: 1.2rem;
+    // Removemos las reglas generales para que no interfieran con las específicas
   }
 
   .option-label {
@@ -106,37 +122,69 @@
   }
 
   // Distribución orgánica según la imagen:
-  // Verde (pequeño, arriba-izquierda)
+  // Chat (arriba-izquierda)
   &.chat-agent {
-    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-    color: white;
-    width: 60px;
-    height: 60px;
-    top: 70px;
-    left: 150px;
+    background: white;
+    color: #333;
+    width: 90px;
+    height: 90px;
+    top: 90px;
+    left: 250px;
     animation: slideFromTopLeft 0.3s ease-out 0.1s both;
+    overflow: hidden;
+    
+    img.option-icon {
+      width: 110% !important;
+      height: 110% !important;
+      object-fit: cover !important;
+      border-radius: 50% !important;
+      margin: -15% !important;
+      margin-left: -15% !important; /* Desplaza hacia la derecha */
+    }
   }
 
-  // Azul (pequeño, abajo-izquierda)
+  // Voz (abajo-izquierda)
   &.voice-agent {
-    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-    color: white;
-    width: 60px;
-    height: 60px;
-    bottom: 5px;
-    left: 120px;
+    background: white;
+    color: #333;
+    width: 90px;
+    height: 90px;
+    bottom: 15px;
+    left: 195px;
     animation: slideFromBottomLeft 0.3s ease-out 0.2s both;
+    overflow: hidden;
+    
+    img.option-icon {
+      width: 140% !important;
+      height: 160% !important;
+      object-fit: cover !important;
+      border-radius: 50% !important;
+      margin: -10% !important;
+      margin-left: -10% !important; /* Desplaza hacia la derecha */
+    }
   }
 
-  // Naranja (mediano, arriba-derecha)
+  // Ventas (arriba-derecha) - Ahora botón de salir
   &.sales-agent {
-    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
     color: white;
-    width: 60px;
-    height: 60px;
-    top: 43px;
-    right: -1px;
+    width: 55px;
+    height: 55px;
+    top: 120px;
+    right: -14px;
     animation: slideFromTopRight 0.3s ease-out 0.3s both;
+    
+    .option-icon {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      border-radius: 50% !important;
+      font-size: 1.5rem !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-weight: bold !important;
+    }
   }
 
   // Púrpura (grande, abajo-derecha) - Nuevo botón
@@ -200,8 +248,12 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 400px;
-  height: 500px; // Reducida de 600px para no interferir con la barra de búsqueda
+  width: 400px !important;
+  height: 400px !important;
+  max-width: 400px !important;
+  max-height: 400px !important;
+  min-width: 400px !important;
+  min-height: 400px !important;
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -212,14 +264,29 @@
 
   // Estilos específicos para el componente de voz
   app-voice-chat {
-    width: 100%;
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 400px !important;
+    max-height: 400px !important;
     border-radius: 12px;
     overflow: hidden;
   }
 
-  .chat-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  // Estilos específicos para el chat de texto
+  .chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100% !important;
+    width: 100% !important;
+    max-height: 400px !important;
+    max-width: 400px !important;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  // Header específico para chat de texto
+  .chat-container .chat-header {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
     color: white;
     padding: 15px 20px;
     display: flex;
@@ -252,19 +319,26 @@
       padding: 5px;
       border-radius: 50%;
       transition: background-color 0.3s ease;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
       &:hover {
         background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
       }
     }
   }
 
-  .chat-messages {
+  // Mensajes específicos para chat de texto
+  .chat-container .chat-messages {
     flex: 1;
     padding: 15px;
     overflow-y: auto; // Barra de desplazamiento vertical
     background: #f8f9fa;
-    max-height: 350px; // Altura máxima para asegurar que quepa el input
+    min-height: 0; // Permite que el flex funcione correctamente
 
     // Estilos para la barra de desplazamiento
     &::-webkit-scrollbar {
@@ -294,12 +368,13 @@
         align-items: flex-start;
 
         .message-content {
-          background: #e3f2fd;
-          color: #1565c0;
+          background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+          color: #2e7d32;
           border-radius: 15px 15px 15px 5px;
           padding: 10px 15px;
           max-width: 80%;
           font-size: 0.9rem;
+          box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
         }
       }
 
@@ -307,12 +382,13 @@
         align-items: flex-end;
 
         .message-content {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
           color: white;
           border-radius: 15px 15px 5px 15px;
           padding: 10px 15px;
           max-width: 80%;
           font-size: 0.9rem;
+          box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
         }
       }
 
@@ -325,44 +401,55 @@
     }
   }
 
-  .chat-input {
-    padding: 15px;
+  // Input específico para chat de texto
+  .chat-container .chat-input {
+    padding: 10px 15px;
     background: white;
     border-top: 1px solid #e9ecef;
     display: flex;
     gap: 10px;
     flex-shrink: 0; // Evita que el input se comprima
+    align-items: center;
+    min-height: 60px;
 
     input {
       flex: 1;
-      padding: 10px 15px;
-      border: 2px solid #e9ecef;
-      border-radius: 25px;
+      padding: 8px 15px;
+      border: 1px solid #e9ecef;
+      border-radius: 20px;
       font-size: 0.9rem;
       outline: none;
-      transition: border-color 0.3s ease;
+      transition: all 0.3s ease;
+      background: #f8f9fa;
+      height: 40px;
+      max-height: 40px;
 
       &:focus {
-        border-color: #667eea;
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        background: white;
       }
     }
 
     .send-btn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
       color: white;
       border: none;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
+      width: 35px;
+      height: 35px;
       cursor: pointer;
-      font-size: 1.1rem;
+      font-size: 1rem;
+      font-weight: bold;
       transition: all 0.3s ease;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
 
       &:hover {
         transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
       }
     }
   }
@@ -382,18 +469,36 @@
 // Responsive design
 @media (max-width: 768px) {
   .chat-window {
-    width: 300px;
-    height: 400px; // Reducida de 400px para mantener proporción
+    width: 300px !important;
+    height: 350px !important;
+    max-width: 300px !important;
+    max-height: 350px !important;
+    min-width: 300px !important;
+    min-height: 350px !important;
     right: 10px;
     bottom: 10px;
   }
 
   .main-agent-button {
-    width: 60px;
-    height: 60px;
+    width: 90px;
+    height: 90px;
     
     .agent-icon {
       font-size: 1.2rem;
+      width: 150%;
+      height: 150%;
+      object-fit: cover;
+      border-radius: 50%;
+      margin: -25%;
+      
+      // Para imágenes específicamente
+      &[src*=".png"], &[src*=".jpg"], &[src*=".jpeg"], &[src*=".svg"] {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        margin: -30%;
+      }
     }
     
     .agent-label {
@@ -402,20 +507,43 @@
   }
 
   .agent-menu {
-    width: 180px;
-    height: 90px;
+    width: 270px;
+    height: 135px;
   }
 
   .agent-option {
-    width: 50px;
-    height: 50px;
+    width: 75px;
+    height: 75px;
+    
+    &.sales-agent {
+      width: 45px;
+      height: 45px;
+    }
 
     .option-icon {
       font-size: 1rem;
+      // Removemos las reglas generales para que no interfieran con las específicas
     }
 
     .option-label {
       font-size: 0.6rem;
+    }
+    
+    // Estilos específicos para móviles
+          &.chat-agent {
+        .option-icon {
+          width: 100%;
+          height: 100%;
+          margin: 10px;
+        }
+      }
+    
+    &.voice-agent {
+      .option-icon {
+        width: 75%;
+        height: 75%;
+        margin: 12.5%;
+      }
     }
   }
 } 

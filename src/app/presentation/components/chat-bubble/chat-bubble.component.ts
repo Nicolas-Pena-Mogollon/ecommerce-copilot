@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UiContextService } from '../../../application/services/ui-context.service';
@@ -19,8 +19,7 @@ import { firstValueFrom } from 'rxjs';
         (click)="toggleAgentMenu()"
         [class.expanded]="isAgentMenuOpen"
       >
-        <span class="agent-icon">🤖</span>
-        <span class="agent-label">Agente de Ventas</span>
+        <img src="/logos/agente.png" alt="Agente de Ventas" class="agent-icon">
       </button>
 
       <!-- Menú circular de agentes -->
@@ -31,8 +30,7 @@ import { firstValueFrom } from 'rxjs';
           (click)="openChat('chat')"
           title="Chat de Ayuda"
         >
-          <span class="option-icon">💬</span>
-          <span class="option-label">Chat</span>
+          <img src="/logos/chat.png" alt="Chat" class="option-icon">
         </button>
 
         <!-- Asistente de voz -->
@@ -41,28 +39,30 @@ import { firstValueFrom } from 'rxjs';
           (click)="openChat('voice')"
           title="Asistente de Voz"
         >
-          <span class="option-icon">🎤</span>
-          <span class="option-label">Voz</span>
+          <img src="/logos/voz.png" alt="Voz" class="option-icon">
         </button>
 
-        <!-- Agente de ventas -->
+        <!-- Botón de salir -->
         <button 
           class="agent-option sales-agent"
-          (click)="openChat('sales')"
-          title="Agente de Ventas"
+          (click)="closeMenu()"
+          title="Cerrar menú"
         >
-          <span class="option-icon">🛒</span>
-          <span class="option-label">Ventas</span>
+          <span class="option-icon">✕</span>
         </button>
       </div>
 
       <!-- Ventana del chat -->
       <div class="chat-window" *ngIf="isChatOpen">
         <!-- Chat de voz -->
-        <app-voice-chat *ngIf="currentAgentType === 'voice'" (closeChat)="closeChat()"></app-voice-chat>
+        <app-voice-chat 
+          *ngIf="currentAgentType === 'voice'" 
+          (closeChat)="closeChat()"
+          #voiceChatRef
+        ></app-voice-chat>
         
         <!-- Chat tradicional y de ventas -->
-        <div *ngIf="currentAgentType !== 'voice'">
+        <div class="chat-container" *ngIf="currentAgentType !== 'voice'">
           <div class="chat-header">
             <div class="header-info">
               <span class="agent-type-icon">{{ getAgentIcon() }}</span>
@@ -95,10 +95,6 @@ import { firstValueFrom } from 'rxjs';
             <button class="send-btn" (click)="sendMessage()">
               {{ getSendButtonIcon() }}
             </button>
-            <!-- Botón de prueba temporal -->
-            <button class="test-btn" (click)="testStepPopup()" style="background: #e74c3c; color: white; padding: 5px 10px; border-radius: 4px; margin-left: 5px;">
-              Test Steps
-            </button>
           </div>
         </div>
       </div>
@@ -116,12 +112,20 @@ export class ChatBubbleComponent {
   currentAgentType: 'chat' | 'voice' | 'sales' = 'chat';
   userInput = '';
   messages: Array<{text: string; isUser: boolean; time: string}> = [];
+  
+  // Referencia al componente de voz para reinicialización
+  @ViewChild('voiceChatRef') voiceChatComponent: any = null;
 
   toggleAgentMenu(): void {
     this.isAgentMenuOpen = !this.isAgentMenuOpen;
     if (!this.isAgentMenuOpen) {
       this.closeChat();
     }
+  }
+
+  closeMenu(): void {
+    this.isAgentMenuOpen = false;
+    this.closeChat();
   }
 
   openChat(agentType: 'chat' | 'voice' | 'sales'): void {
@@ -133,12 +137,28 @@ export class ChatBubbleComponent {
     if (agentType !== 'voice') {
       this.addWelcomeMessage();
     }
+    
+    // Si es chat de voz, reinicializar después de un breve delay
+    if (agentType === 'voice') {
+      setTimeout(async () => {
+        if (this.voiceChatComponent) {
+          await this.voiceChatComponent.reinitialize();
+        }
+      }, 200); // Aumentado el delay para asegurar que el componente esté listo
+    }
   }
 
   closeChat(): void {
     this.isChatOpen = false;
     this.messages = [];
     this.userInput = '';
+    
+    // Si es chat de voz, limpiar el servicio de voz
+    if (this.currentAgentType === 'voice') {
+      // El componente de voz se encargará de la limpieza en ngOnDestroy
+      // pero también podemos limpiar la referencia
+      this.voiceChatComponent = null;
+    }
   }
 
   private addWelcomeMessage(): void {
@@ -153,6 +173,9 @@ export class ChatBubbleComponent {
       isUser: false,
       time: this.formatTime(new Date())
     });
+
+    // Scroll al mensaje de bienvenida
+    setTimeout(() => this.scrollToBottom(), 100);
   }
 
   async sendMessage(): Promise<void> {
@@ -167,6 +190,9 @@ export class ChatBubbleComponent {
 
     const userInput = this.userInput;
     this.userInput = '';
+
+    // Scroll al último mensaje después de enviar
+    setTimeout(() => this.scrollToBottom(), 100);
 
     await this.processMessageByAgent(userInput);
   }
@@ -204,6 +230,9 @@ export class ChatBubbleComponent {
       isUser: false,
       time: this.formatTime(new Date())
     });
+
+    // Scroll al último mensaje después de recibir respuesta
+    setTimeout(() => this.scrollToBottom(), 100);
   }
 
   private async processChatAgent(userInput: string, uiContext: any): Promise<string> {
@@ -324,9 +353,9 @@ export class ChatBubbleComponent {
 
   getSendButtonIcon(): string {
     const icons = {
-      chat: '📤',
+      chat: '➤',
       voice: '🎤',
-      sales: '💼'
+      sales: '➤'
     };
     return icons[this.currentAgentType];
   }
@@ -348,5 +377,15 @@ export class ChatBubbleComponent {
       minute: '2-digit',
       hour12: true
     });
+  }
+
+  /**
+   * Hace scroll al último mensaje del chat
+   */
+  private scrollToBottom(): void {
+    const chatMessages = document.querySelector('.chat-messages');
+    if (chatMessages) {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
   }
 } 

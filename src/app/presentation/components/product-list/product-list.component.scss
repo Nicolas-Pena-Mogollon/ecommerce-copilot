@@ -1,31 +1,18 @@
 .product-list-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 20px 20px 20px 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.product-list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #e0e0e0;
 
-  h1 {
-    color: #2c3e50;
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin: 0;
-  }
-}
 
 .product-list-content {
   display: grid;
   grid-template-columns: 300px 1fr;
   gap: 30px;
   min-height: 600px;
+  align-items: start;
 }
 
 .filters-sidebar {
@@ -36,6 +23,31 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   width: 100%;
   box-sizing: border-box;
+  position: sticky;
+  top: 100px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #bdc3c7 #f8f9fa;
+  transition: top 0.3s ease, max-height 0.3s ease;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #bdc3c7;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #95a5a6;
+    }
+  }
 }
 
 .products-main {
@@ -132,19 +144,17 @@
 }
 
 @media (max-width: 768px) {
-  .product-list-header {
-    flex-direction: column;
-    gap: 20px;
-    text-align: center;
-
-    h1 {
-      font-size: 2rem;
-    }
-  }
 
   .product-list-content {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+
+  .filters-sidebar {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+    top: auto;
   }
 
   .products-grid {

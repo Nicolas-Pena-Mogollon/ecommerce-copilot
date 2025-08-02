@@ -8,6 +8,7 @@ import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 export interface VoiceAgentState {
   isListening: boolean;
   isProcessing: boolean;
+  hasAssistantSpeaking: boolean;
   hasPermission: boolean;
   isSupported: boolean;
   lastRecognizedText: string;
@@ -26,6 +27,7 @@ export class VoiceAgentService {
   private stateSubject = new BehaviorSubject<VoiceAgentState>({
     isListening: false,
     isProcessing: false,
+    hasAssistantSpeaking: false,
     hasPermission: false,
     isSupported: false,
     lastRecognizedText: '',
@@ -54,7 +56,6 @@ export class VoiceAgentService {
     try {
       const hasPermission = await this.voiceService.checkMicrophonePermission();
       this.updateState({ hasPermission });
-      console.log('Permisos verificados al inicializar:', hasPermission);
     } catch (error) {
       console.error('Error verificando permisos:', error);
     }
@@ -88,9 +89,11 @@ export class VoiceAgentService {
     try {
       this.updateState({ error: null });
       
+      // Configurar callbacks primero
+      await this.setupVoiceAgent();
+      
       // Solicitar permisos de micrófono
       const hasPermission = await this.voiceService.requestMicrophonePermission();
-      console.log('Estado de permisos:', hasPermission);
       
       // Actualizar estado inmediatamente
       this.updateState({ hasPermission });
@@ -112,21 +115,21 @@ export class VoiceAgentService {
     }
   }
 
-  /**
+    /**
    * Inicia el reconocimiento de voz
    */
   async startListening(): Promise<void> {
     try {
       // Si el asistente está hablando, detenerlo primero
       if (this.voiceService.isSpeaking()) {
-        console.log('Deteniendo síntesis de voz para escuchar al usuario');
         this.voiceService.stopSpeaking();
       }
 
       this.updateState({ error: null, isListening: true });
       await this.voiceService.startSpeechRecognition();
     } catch (error) {
-      this.updateState({ 
+      console.error('Error iniciando reconocimiento de voz:', error);
+      this.updateState({
         error: `Error al iniciar el reconocimiento: ${error}`,
         isListening: false
       });
@@ -148,10 +151,11 @@ export class VoiceAgentService {
     // Detener el reconocimiento inmediatamente para evitar procesamiento múltiple
     this.voiceService.stopSpeechRecognition();
     
+    // ACTUALIZACIÓN INMEDIATA: Cambiar a procesamiento inmediatamente
     this.updateState({ 
       lastRecognizedText: text,
       isProcessing: true,
-      isListening: false // Detener escucha mientras procesa
+      isListening: false // Detener escucha inmediatamente
     });
 
     try {
@@ -181,16 +185,22 @@ export class VoiceAgentService {
         // Leer la respuesta del backend en voz alta
         await this.voiceService.speakText(response.response);
       } else {
-        await this.voiceService.speakText('No pude procesar tu consulta. ¿Podrías repetirla?');
+        // Caso específico cuando no hay respuesta del servidor
+        await this.voiceService.speakText('Estamos teniendo problemas con el servicio. Intenta más tarde.');
       }
 
+      // Solo cambiar a no procesando cuando termine de hablar
       this.updateState({ isProcessing: false });
       
       // Resetear el estado de procesamiento para permitir nuevos resultados
       this.voiceService.resetProcessingState();
     } catch (error) {
       console.error('Error procesando voz:', error);
-      await this.voiceService.speakText('Hubo un error procesando tu consulta. Inténtalo de nuevo.');
+      
+      // Mensaje específico para errores de conexión o servicio
+      await this.voiceService.speakText('Estamos teniendo problemas con el servicio. Intenta más tarde.');
+      
+      // Solo cambiar a no procesando cuando termine de hablar el mensaje de error
       this.updateState({ 
         isProcessing: false,
         error: `Error procesando consulta: ${error}`
@@ -217,10 +227,19 @@ export class VoiceAgentService {
    */
   async speakText(text: string): Promise<void> {
     try {
+      // Marcar que el asistente va a empezar a hablar
+      this.updateState({ hasAssistantSpeaking: true });
+      
       await this.voiceService.speakText(text);
+      
+      // Marcar que el asistente terminó de hablar
+      this.updateState({ hasAssistantSpeaking: false });
     } catch (error) {
       console.error('Error al leer texto:', error);
-      this.updateState({ error: `Error al leer texto: ${error}` });
+      this.updateState({ 
+        error: `Error al leer texto: ${error}`,
+        hasAssistantSpeaking: false 
+      });
     }
   }
 
@@ -229,23 +248,25 @@ export class VoiceAgentService {
    */
   stopSpeaking(): void {
     this.voiceService.stopSpeaking();
+    this.updateState({ hasAssistantSpeaking: false });
   }
 
   /**
    * Verifica si el asistente está hablando
    */
   isAssistantSpeaking(): boolean {
-    return this.voiceService.isSpeaking();
+    return this.stateSubject.value.hasAssistantSpeaking;
   }
 
   /**
    * Actualiza el estado del agente
    */
   private updateState(partialState: Partial<VoiceAgentState>): void {
-    this.stateSubject.next({
+    const newState = {
       ...this.stateSubject.value,
       ...partialState
-    });
+    };
+    this.stateSubject.next(newState);
   }
 
   /**
@@ -282,5 +303,59 @@ export class VoiceAgentService {
    */
   clearError(): void {
     this.updateState({ error: null });
+  }
+
+  /**
+   * Limpia completamente el reconocimiento de voz
+   */
+  cleanup(): void {
+    this.voiceService.cleanupSpeechRecognition();
+    this.updateState({
+      isListening: false,
+      isProcessing: false,
+      hasAssistantSpeaking: false,
+      lastRecognizedText: '',
+      error: null
+    });
+  }
+
+  /**
+   * Reinicializa el agente de voz después de una limpieza
+   */
+  public async reinitializeVoiceAgent(): Promise<boolean> {
+    try {
+      // Reinicializar el reconocimiento de voz
+      this.voiceService.reinitializeSpeechRecognition();
+      
+      // Reconfigurar callbacks después de la limpieza
+      this.voiceService.onSpeechResult((text: string) => {
+        this.handleSpeechResult(text);
+      });
+
+      this.voiceService.onSpeechError((error: string) => {
+        this.updateState({ 
+          error: `Error de reconocimiento: ${error}`,
+          isListening: false,
+          isProcessing: false
+        });
+      });
+
+      this.voiceService.onSpeechEnd(() => {
+        this.updateState({ isListening: false });
+      });
+
+      this.voiceService.onSilenceTimeout(() => {
+        this.handleSilenceTimeout();
+      });
+
+      // Verificar permisos existentes
+      const hasPermission = await this.voiceService.checkMicrophonePermission();
+      this.updateState({ hasPermission });
+
+      return hasPermission;
+    } catch (error) {
+      console.error('Error reinicializando agente de voz:', error);
+      return false;
+    }
   }
 } 
